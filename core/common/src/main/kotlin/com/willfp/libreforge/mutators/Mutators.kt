@@ -14,13 +14,6 @@ import com.willfp.libreforge.mutators.impl.MutatorLocationToPlayer
 import com.willfp.libreforge.mutators.impl.MutatorLocationToProjectile
 import com.willfp.libreforge.mutators.impl.MutatorLocationToVictim
 import com.willfp.libreforge.mutators.impl.MutatorPlayerAsVictim
-import com.willfp.libreforge.mutators.impl.MutatorPlayerToItem
-import com.willfp.libreforge.mutators.impl.MutatorPlayerToItemBoots
-import com.willfp.libreforge.mutators.impl.MutatorPlayerToItemChestplate
-import com.willfp.libreforge.mutators.impl.MutatorPlayerToItemHelmet
-import com.willfp.libreforge.mutators.impl.MutatorPlayerToItemLeggings
-import com.willfp.libreforge.mutators.impl.MutatorPlayerToItemMainHand
-import com.willfp.libreforge.mutators.impl.MutatorPlayerToItemOffHand
 import com.willfp.libreforge.mutators.impl.MutatorSpinLocation
 import com.willfp.libreforge.mutators.impl.MutatorSpinVelocity
 import com.willfp.libreforge.mutators.impl.MutatorTranslateLocation
@@ -85,12 +78,5 @@ object Mutators: Registry<Mutator<*>>() {
         register(MutatorDispatcherAsPlayer)
         register(MutatorDispatcherAsVictim)
         register(MutatorLocationToDrop)
-        register(MutatorPlayerToItem)
-        register(MutatorPlayerToItemMainHand)
-        register(MutatorPlayerToItemOffHand)
-        register(MutatorPlayerToItemHelmet)
-        register(MutatorPlayerToItemChestplate)
-        register(MutatorPlayerToItemLeggings)
-        register(MutatorPlayerToItemBoots)
     }
 }
