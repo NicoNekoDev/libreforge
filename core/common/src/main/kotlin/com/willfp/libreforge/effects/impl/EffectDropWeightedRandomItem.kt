@@ -10,6 +10,7 @@ import com.willfp.libreforge.WeightedList
 import com.willfp.libreforge.arguments
 import com.willfp.libreforge.effects.Effect
 import com.willfp.libreforge.getStrings
+import com.willfp.libreforge.plugin
 import com.willfp.libreforge.toWeightedList
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
@@ -35,7 +36,9 @@ object EffectDropWeightedRandomItem : Effect<WeightedList<WeightedItems>>("drop_
                 .setLocation(location)
                 .push()
         } else {
-            location.world?.dropItem(location, item)
+            plugin.scheduler.runTask(location) {
+                location.world?.dropItem(location, item)
+            }
         }
 
         return true
