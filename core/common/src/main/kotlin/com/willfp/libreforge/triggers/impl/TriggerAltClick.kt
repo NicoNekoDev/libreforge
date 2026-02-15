@@ -126,7 +126,7 @@ object TriggerAltClick : Trigger("alt_click") {
 
         preventDoubleTriggers += player.uniqueId
 
-        plugin.scheduler.run {
+        plugin.scheduler.runTask(player) {
             preventDoubleTriggers -= player.uniqueId
         }
 

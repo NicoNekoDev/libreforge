@@ -87,7 +87,7 @@ abstract class AttributeEffect(
         )
 
         // Run on next tick to prevent constraining to the lower value during reloads.
-        plugin.scheduler.run {
+        plugin.scheduler.runTask(entity) {
             constrainAttribute(entity, instance.value)
         }
     }

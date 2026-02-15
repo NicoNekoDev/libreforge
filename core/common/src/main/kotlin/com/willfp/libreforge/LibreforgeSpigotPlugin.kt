@@ -21,6 +21,8 @@ import com.willfp.libreforge.integrations.aureliumskills.AureliumSkillsIntegrati
 import com.willfp.libreforge.integrations.axplugins.axenvoy.AxEnvoyIntegration
 import com.willfp.libreforge.integrations.axplugins.axtrade.AxTradeIntegration
 import com.willfp.libreforge.integrations.citizens.CitizensIntegration
+import com.willfp.libreforge.integrations.custom_blocks.nexo.NexoIntegration
+import com.willfp.libreforge.integrations.custom_blocks.oraxen.OraxenIntegration
 import com.willfp.libreforge.integrations.custombiomes.impl.CustomBiomesTerra
 import com.willfp.libreforge.integrations.custombiomes.impl.CustomBiomesTerraformGenerator
 import com.willfp.libreforge.integrations.edprisoncore.EdPrisonCoreIntegration
@@ -33,8 +35,6 @@ import com.willfp.libreforge.integrations.levelledmobs.LevelledMobsIntegration
 import com.willfp.libreforge.integrations.mcmmo.McMMOIntegration
 import com.willfp.libreforge.integrations.modelengine.ModelEngineIntegration
 import com.willfp.libreforge.integrations.mythicmobs.MythicMobsIntegration
-import com.willfp.libreforge.integrations.custom_blocks.nexo.NexoIntegration
-import com.willfp.libreforge.integrations.custom_blocks.oraxen.OraxenIntegration
 import com.willfp.libreforge.integrations.paper.PaperIntegration
 import com.willfp.libreforge.integrations.purpur.PurpurIntegration
 import com.willfp.libreforge.integrations.scyther.ScytherIntegration
@@ -157,7 +157,7 @@ class LibreforgeSpigotPlugin : EcoPlugin() {
 
         // Poll for changes
         val skipAFKPlayers = configYml.getBool("refresh.players.skip-afk-players")
-        plugin.scheduler.runTimer(20, 20) {
+        plugin.scheduler.runTaskTimer(20, 20) {
             for (player in Bukkit.getOnlinePlayers()) {
                 if (skipAFKPlayers && AFKManager.isAfk(player)) {
                     continue
@@ -174,7 +174,7 @@ class LibreforgeSpigotPlugin : EcoPlugin() {
              */
             var currentOffset = 30L
             for (world in Bukkit.getWorlds()) {
-                plugin.scheduler.runTimer(currentOffset, configYml.getInt("refresh.entities.interval").toLong()) {
+                plugin.scheduler.runTaskTimer(currentOffset, configYml.getInt("refresh.entities.interval").toLong()) {
                     for (entity in world.entities) {
                         if (entity is LivingEntity) {
                             entity.toDispatcher().refreshHolders()
@@ -186,7 +186,7 @@ class LibreforgeSpigotPlugin : EcoPlugin() {
         }
 
         // Poll for changes in global holders
-        this.scheduler.runTimer(25, 20) {
+        this.scheduler.runTaskTimer(25, 20) {
             GlobalDispatcher.refreshHolders()
         }
     }

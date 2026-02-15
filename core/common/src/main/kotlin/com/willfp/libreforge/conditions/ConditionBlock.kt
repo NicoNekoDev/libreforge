@@ -54,7 +54,7 @@ class ConditionBlock<T> internal constructor(
              */
 
             if (!syncMetCache.asMap().containsKey(dispatcher.uuid)) {
-                plugin.scheduler.run {
+                plugin.scheduler.runTask {
                     // Double check that it isn't cached by the time we run
                     if (!syncMetCache.asMap().containsKey(dispatcher.uuid)) {
                         syncMetCache.put(dispatcher.uuid, isMet(dispatcher, holder))

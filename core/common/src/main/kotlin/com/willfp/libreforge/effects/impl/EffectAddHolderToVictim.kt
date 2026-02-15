@@ -46,7 +46,7 @@ object EffectAddHolderToVictim : Effect<HolderTemplate>("add_holder_to_victim") 
 
         holders[player.uniqueId].add(holder)
 
-        plugin.scheduler.runLater(duration.toLong()) {
+        plugin.scheduler.runTaskLater(player, duration.toLong()) {
             holders[player.uniqueId].remove(holder)
             if (holders[player.uniqueId].isEmpty()) {
                 holders.remove(player.uniqueId)

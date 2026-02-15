@@ -69,7 +69,7 @@ class ItemRefreshListener(
 
         val dispatcher = player.toDispatcher()
 
-        plugin.scheduler.run {
+        plugin.scheduler.runTask(player) {
             dispatcher.refreshHolders()
         }
     }

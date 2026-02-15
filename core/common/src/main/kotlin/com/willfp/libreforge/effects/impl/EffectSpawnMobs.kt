@@ -75,7 +75,7 @@ object EffectSpawnMobs : Effect<TestableEntity>("spawn_mobs") {
 
             mob.health = health
 
-            plugin.scheduler.runLater(ticksToLive.toLong()) { mob.remove() }
+            plugin.scheduler.runTaskLater(mob, ticksToLive.toLong()) { mob.remove() }
         }
 
         return true

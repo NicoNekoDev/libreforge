@@ -41,7 +41,7 @@ object EffectTraceback : Effect<NoCompileData>("traceback") {
     }
 
     override fun postRegister() {
-        plugin.scheduler.runTimer(20, 20) {
+        plugin.scheduler.runTaskTimer(20, 20) {
             for (player in Bukkit.getOnlinePlayers()) {
                 @Suppress("UNCHECKED_CAST")
                 val times = player.getMetadata(key).getOrNull(0)?.value() as? List<Location> ?: emptyList()

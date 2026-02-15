@@ -87,7 +87,11 @@ object EffectReplaceNear : Effect<NoCompileData>("replace_near") {
                         }
                     }
 
-                    if (!(AntigriefManager.canBreakBlock(player, toReplace) && AntigriefManager.canPlaceBlock(player, toReplace))) {
+                    if (!(AntigriefManager.canBreakBlock(player, toReplace) && AntigriefManager.canPlaceBlock(
+                            player,
+                            toReplace
+                        ))
+                    ) {
                         continue
                     }
 
@@ -96,7 +100,7 @@ object EffectReplaceNear : Effect<NoCompileData>("replace_near") {
                         val oldBlockData = toReplace.blockData
                         toReplace.setMetadata("rn-block", plugin.createMetadataValue(true))
 
-                        plugin.scheduler.runLater(duration.toLong()) {
+                        plugin.scheduler.runTaskLater(block.location, duration.toLong()) {
                             if (toReplace.hasMetadata("rn-block")) {
                                 toReplace.type = oldBlock
                                 toReplace.blockData = oldBlockData

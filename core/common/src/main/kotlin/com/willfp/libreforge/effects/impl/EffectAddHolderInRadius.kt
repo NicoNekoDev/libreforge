@@ -65,7 +65,7 @@ object EffectAddHolderInRadius : Effect<HolderTemplate>("add_holder_in_radius") 
         )
 
         holders += holder
-        plugin.scheduler.runLater(duration.toLong()) {
+        plugin.scheduler.runTaskLater(duration.toLong()) {
             holders -= holder
         }
 

@@ -36,11 +36,13 @@ object EffectReplantCrops : Effect<NoCompileData>("replant_crops") {
         holder: ProvidedHolder,
         compileData: NoCompileData
     ) {
-        players[dispatcher.uuid].add(ReplantConfig(
-            identifiers.uuid,
-            config.getBool("consume_seeds"),
-            config.getBool("only_fully_grown")
-        ))
+        players[dispatcher.uuid].add(
+            ReplantConfig(
+                identifiers.uuid,
+                config.getBool("consume_seeds"),
+                config.getBool("only_fully_grown")
+            )
+        )
     }
 
     override fun onDisable(dispatcher: Dispatcher<*>, identifiers: Identifiers, holder: ProvidedHolder) {
@@ -120,7 +122,7 @@ object EffectReplantCrops : Effect<NoCompileData>("replant_crops") {
 
         data.age = 0
 
-        plugin.scheduler.run {
+        plugin.scheduler.runTask(block.location) {
             block.type = type
             block.blockData = data
 
