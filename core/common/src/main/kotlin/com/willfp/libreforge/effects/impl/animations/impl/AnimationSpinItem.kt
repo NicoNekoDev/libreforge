@@ -8,6 +8,7 @@ import com.willfp.libreforge.arguments
 import com.willfp.libreforge.effects.impl.animations.Animation
 import com.willfp.libreforge.getDoubleFromExpression
 import com.willfp.libreforge.getIntFromExpression
+import com.willfp.libreforge.plugin
 import com.willfp.libreforge.triggers.TriggerData
 import dev.romainguy.kotlin.math.Float3
 import org.bukkit.Location
@@ -96,6 +97,6 @@ object AnimationSpinItem : Animation<NoCompileData, List<ArmorStand>>("spin_item
         compileData: NoCompileData,
         data: List<ArmorStand>
     ) {
-        data.forEach { it.remove() }
+        data.forEach { plugin.scheduler.runTask(it) { it.remove() } }
     }
 }

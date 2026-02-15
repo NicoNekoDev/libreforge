@@ -1,6 +1,7 @@
 package com.willfp.libreforge.triggers.event
 
 import com.willfp.eco.util.toSingletonList
+import com.willfp.libreforge.plugin
 import org.bukkit.Location
 import org.bukkit.entity.Item
 import org.bukkit.event.Cancellable
@@ -143,7 +144,7 @@ class EditableBlockDropEvent(
 
 class EditablePlayerDropEvent(
     private val event: PlayerDropItemEvent
-): EditableDropEvent() {
+) : EditableDropEvent() {
     private val modifiers = mutableListOf<DropModifier>()
 
     override fun addModifier(modifier: DropModifier) {
@@ -161,7 +162,9 @@ class EditablePlayerDropEvent(
 
     override fun removeItem(item: ItemStack) {
         if (event.itemDrop.itemStack == item) {
-            event.itemDrop.remove()
+            plugin.scheduler.runTask(event.itemDrop) {
+                event.itemDrop.remove()
+            }
         }
     }
 
@@ -197,7 +200,9 @@ class EditableFishDropEvent(
 
     override fun removeItem(item: ItemStack) {
         if (itemEntity.itemStack == item) {
-            itemEntity.remove()
+            plugin.scheduler.runTask(itemEntity) {
+                itemEntity.remove()
+            }
         }
     }
 

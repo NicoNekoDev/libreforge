@@ -86,7 +86,7 @@ object EffectGlowNearbyBlocks : Effect<NoCompileData>("glow_nearby_blocks") {
             team.addEntry(shulker.uniqueId.toString())
             block.setMetadata("gnb-uuid", plugin.metadataValueFactory.create(shulker.uniqueId))
 
-            plugin.scheduler.runLater(duration.toLong()) {
+            plugin.scheduler.runTaskLater(shulker, duration.toLong()) {
                 team.removeEntry(shulker.uniqueId.toString())
                 shulker.remove()
                 block.removeMetadata("gnb-uuid", plugin)
@@ -100,14 +100,14 @@ object EffectGlowNearbyBlocks : Effect<NoCompileData>("glow_nearby_blocks") {
     fun handleChunkUnload(event: ChunkUnloadEvent) {
         event.chunk.entities.filterIsInstance<LivingEntity>()
             .filter { it.hasMetadata("gnb-shulker") }
-            .forEach { it.remove() }
+            .forEach { plugin.scheduler.runTask(it) { it.remove() } }
     }
 
     @EventHandler
     fun handleChunkLoad(event: ChunkLoadEvent) {
         event.chunk.entities.filterIsInstance<LivingEntity>()
             .filter { it.hasMetadata("gnb-shulker") }
-            .forEach { it.remove() }
+            .forEach { plugin.scheduler.runTask(it) { it.remove() } }
     }
 
     @EventHandler
@@ -122,7 +122,12 @@ object EffectGlowNearbyBlocks : Effect<NoCompileData>("glow_nearby_blocks") {
             it.value() is UUID
         }?.value() as? UUID ?: return
 
-        Bukkit.getServer().getEntity(uuid)?.remove()
+        val toRemove = Bukkit.getServer().getEntity(uuid)
+        toRemove?.let {
+            plugin.scheduler.runTask(it) {
+                it.remove()
+            }
+        }
 
         for (shulker in block.location.world.getNearbyEntities(
             block.location,
@@ -130,7 +135,9 @@ object EffectGlowNearbyBlocks : Effect<NoCompileData>("glow_nearby_blocks") {
             2.0,
             2.0
         ) { it.hasMetadata("gnb-shulker") }) {
-            shulker.remove()
+            plugin.scheduler.runTask(shulker) {
+                shulker.remove()
+            }
         }
     }
 }
