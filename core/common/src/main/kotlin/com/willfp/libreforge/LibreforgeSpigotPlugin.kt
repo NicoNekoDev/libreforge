@@ -176,8 +176,17 @@ class LibreforgeSpigotPlugin : EcoPlugin() {
             for (world in Bukkit.getWorlds()) {
                 plugin.scheduler.runTaskTimer(currentOffset, configYml.getInt("refresh.entities.interval").toLong()) {
                     for (entity in world.entities) {
-                        if (entity is LivingEntity) {
-                            entity.toDispatcher().refreshHolders()
+                        if (Prerequisite.HAS_FOLIA.isMet) { // folia issue
+                            if (entity.isValid)
+                                plugin.scheduler.runTask(entity) {
+                                    if (entity is LivingEntity) {
+                                        entity.toDispatcher().refreshHolders()
+                                    }
+                                }
+                        } else {
+                            if (entity is LivingEntity) {
+                                entity.toDispatcher().refreshHolders()
+                            }
                         }
                     }
                 }
@@ -234,7 +243,7 @@ class LibreforgeSpigotPlugin : EcoPlugin() {
             IntegrationLoader("EdPrison") { EdPrisonCoreIntegration.load(this) },
             IntegrationLoader("MythicMobs") { MythicMobsIntegration.load(this) },
             IntegrationLoader("Nexo") { NexoIntegration.load(this) },
-            IntegrationLoader("Oraxen") { OraxenIntegration.load(this)}
+            IntegrationLoader("Oraxen") { OraxenIntegration.load(this) }
         )
     }
 
