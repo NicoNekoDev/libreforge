@@ -1,5 +1,6 @@
 package com.willfp.libreforge.effects.impl.animations.impl
 
+import com.willfp.eco.core.Prerequisite
 import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.eco.core.items.Items
 import com.willfp.libreforge.NoCompileData
@@ -76,8 +77,12 @@ object AnimationSpinItem : Animation<NoCompileData, List<ArmorStand>>("spin_item
             val z = sin(armorStandAngle) * radius
 
             val armorStandLocation = sourceLocation.clone().add(x, 0.0, z)
-            armorStand.teleport(armorStandLocation.add(0.0,0.5, 0.0))
-            armorStand.rightArmPose = EulerAngle(0.0, armorStandAngle + Math.PI, 0.0) // Add PI to make the item point outwards
+            if (Prerequisite.HAS_FOLIA.isMet)
+                armorStand.teleportAsync(armorStandLocation.add(0.0, 0.5, 0.0))
+            else
+                armorStand.teleport(armorStandLocation.add(0.0, 0.5, 0.0))
+            armorStand.rightArmPose =
+                EulerAngle(0.0, armorStandAngle + Math.PI, 0.0) // Add PI to make the item point outwards
         }
 
         return tick >= config.getDoubleFromExpression("duration", triggerData)

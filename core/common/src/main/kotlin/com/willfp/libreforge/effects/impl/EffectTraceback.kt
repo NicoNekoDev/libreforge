@@ -1,5 +1,6 @@
 package com.willfp.libreforge.effects.impl
 
+import com.willfp.eco.core.Prerequisite
 import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.libreforge.NoCompileData
 import com.willfp.libreforge.arguments
@@ -35,7 +36,10 @@ object EffectTraceback : Effect<NoCompileData>("traceback") {
 
         val location = times.getOrElse(index) { times.lastOrNull() } ?: return false
 
-        player.teleport(location)
+        if (Prerequisite.HAS_FOLIA.isMet)
+            player.teleportAsync(location)
+        else
+            player.teleport(location)
 
         return true
     }
