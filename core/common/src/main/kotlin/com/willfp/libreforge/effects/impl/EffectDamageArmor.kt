@@ -12,6 +12,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Sound
 import org.bukkit.SoundCategory
+import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.player.PlayerItemBreakEvent
 import org.bukkit.event.player.PlayerItemDamageEvent
@@ -30,7 +31,7 @@ object EffectDamageArmor : Effect<NoCompileData>("damage_armor") {
     }
 
     override fun onTrigger(config: Config, data: TriggerData, compileData: NoCompileData): Boolean {
-        val victim = data.victim ?: return false
+        val victim = data.victim as? LivingEntity ?: return false
 
         val damage = config.getIntFromExpression("damage", data)
 

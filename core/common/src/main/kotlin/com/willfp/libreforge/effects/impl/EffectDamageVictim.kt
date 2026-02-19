@@ -8,6 +8,7 @@ import com.willfp.libreforge.effects.Effect
 import com.willfp.libreforge.getDoubleFromExpression
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
+import org.bukkit.entity.LivingEntity
 
 
 object EffectDamageVictim : Effect<NoCompileData>("damage_victim") {
@@ -20,7 +21,7 @@ object EffectDamageVictim : Effect<NoCompileData>("damage_victim") {
     }
 
     override fun onTrigger(config: Config, data: TriggerData, compileData: NoCompileData): Boolean {
-        val victim = data.victim ?: return false
+        val victim = data.victim as? LivingEntity ?: return false
         val player = data.player
 
         val damage = config.getDoubleFromExpression("damage", data)

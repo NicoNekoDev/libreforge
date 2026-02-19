@@ -9,6 +9,7 @@ import com.willfp.libreforge.effects.Effect
 import com.willfp.libreforge.getDoubleFromExpression
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
+import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Monster
 
 object EffectSwarm : Effect<List<TestableEntity>?>("swarm") {
@@ -21,7 +22,7 @@ object EffectSwarm : Effect<List<TestableEntity>?>("swarm") {
     }
 
     override fun onTrigger(config: Config, data: TriggerData, compileData: List<TestableEntity>?): Boolean {
-        val victim = data.victim ?: return false
+        val victim = data.victim as? LivingEntity ?: return false
 
         val radius = config.getDoubleFromExpression("radius", data)
 

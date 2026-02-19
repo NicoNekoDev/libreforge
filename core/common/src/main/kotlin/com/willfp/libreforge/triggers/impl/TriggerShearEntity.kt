@@ -5,7 +5,6 @@ import com.willfp.libreforge.triggers.Trigger
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
 import org.bukkit.entity.EntityType
-import org.bukkit.entity.LivingEntity
 import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerShearEntityEvent
 
@@ -19,7 +18,7 @@ object TriggerShearEntity : Trigger("shear_entity") {
 
     @EventHandler(ignoreCancelled = true)
     fun handle(event: PlayerShearEntityEvent) {
-        val entity = event.entity as? LivingEntity ?: return
+        val entity = event.entity
 
         if (entity.type !in listOf(EntityType.SHEEP, EntityType.SNOW_GOLEM, EntityType.MOOSHROOM)) {
             return

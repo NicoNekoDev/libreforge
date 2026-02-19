@@ -4,7 +4,6 @@ import com.willfp.libreforge.toDispatcher
 import com.willfp.libreforge.triggers.Trigger
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
-import org.bukkit.entity.LivingEntity
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.entity.EntityDamageByEntityEvent
@@ -18,7 +17,7 @@ object TriggerEntityDamageByEntity : Trigger("entity_damage_by_entity") {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun handle(event: EntityDamageByEntityEvent) {
         val entity = event.entity
-        val damager = event.damager as? LivingEntity ?: return
+        val damager = event.damager
 
         this.dispatch(
             entity.toDispatcher(),

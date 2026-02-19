@@ -64,7 +64,7 @@ object EffectSpawnMobs : Effect<TestableEntity>("spawn_mobs") {
             val healthAttr = mob.getAttribute(Attribute.MAX_HEALTH) ?: continue
             healthAttr.baseValue = health
 
-            if (victim != null) {
+            if (victim != null && victim is LivingEntity) {
                 mob.target = victim
                 mob.setMetadata("spawn-mobs-target", plugin.createMetadataValue(victim))
             }

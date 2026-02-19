@@ -4,7 +4,7 @@ import com.willfp.libreforge.toDispatcher
 import com.willfp.libreforge.triggers.Trigger
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
-import org.bukkit.entity.LivingEntity
+import com.willfp.libreforge.triggers.tryAsLivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.entity.EntityDamageByEntityEvent
@@ -24,8 +24,8 @@ object TriggerMeleeAttack : Trigger("melee_attack") {
 
     @EventHandler(ignoreCancelled = true)
     fun handle(event: EntityDamageByEntityEvent) {
-        val attacker = event.damager as? LivingEntity ?: return
-        val victim = event.entity as? LivingEntity ?: return
+        val attacker = event.damager
+        val victim = event.entity
 
         if (event.cause == EntityDamageEvent.DamageCause.THORNS) {
             return
@@ -44,7 +44,7 @@ object TriggerMeleeAttack : Trigger("melee_attack") {
                 victim = victim,
                 location = victim.location,
                 event = event,
-                item = attacker.equipment?.itemInMainHand,
+                item = attacker.tryAsLivingEntity()?.equipment?.itemInMainHand,
                 value = event.finalDamage
             )
         )

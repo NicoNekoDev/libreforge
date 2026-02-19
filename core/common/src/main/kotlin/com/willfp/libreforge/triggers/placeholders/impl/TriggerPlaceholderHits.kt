@@ -18,7 +18,7 @@ object TriggerPlaceholderHits : TriggerPlaceholder("hits") {
     private const val HITS_META_KEY = "libreforge_tracked_hits"
 
     override fun createPlaceholders(data: TriggerData): Collection<NamedValue> {
-        val victim = data.victim ?: return emptyList()
+        val victim = data.victim as? LivingEntity ?: return emptyList()
         val player = data.player ?: return emptyList()
 
         return listOf(
@@ -41,7 +41,7 @@ object TriggerPlaceholderHits : TriggerPlaceholder("hits") {
         }
 
         val player = event.trigger.data.player ?: return
-        val entity = event.trigger.data.victim ?: return
+        val entity = event.trigger.data.victim as? LivingEntity ?: return
 
         @Suppress("UNCHECKED_CAST")
         val map = entity.getMetadata(HITS_META_KEY).firstOrNull()?.value() as? MutableMap<UUID, Int> ?: mutableMapOf()

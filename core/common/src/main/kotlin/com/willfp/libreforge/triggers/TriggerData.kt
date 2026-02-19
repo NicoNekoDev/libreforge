@@ -11,6 +11,7 @@ import com.willfp.libreforge.toDispatcher
 import com.willfp.libreforge.triggers.impl.TriggerBlank
 import org.bukkit.Location
 import org.bukkit.block.Block
+import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.entity.Projectile
@@ -38,13 +39,13 @@ enum class TriggerParameter(
 class TriggerData(
     val dispatcher: Dispatcher<*> = GlobalDispatcher,
     val player: Player? = null,
-    val victim: LivingEntity? = null,
+    val victim: Entity? = null,
     val block: Block? = null,
     val event: Event? = null,
     val location: Location? = victim?.location ?: player?.location,
     val projectile: Projectile? = null,
     val velocity: Vector? = player?.velocity ?: victim?.velocity,
-    val item: ItemStack? = player?.inventory?.itemInMainHand ?: victim?.equipment?.itemInMainHand,
+    val item: ItemStack? = player?.inventory?.itemInMainHand ?: victim?.tryAsLivingEntity()?.equipment?.itemInMainHand,
     val text: String? = null,
     val value: Double = 1.0,
     val altValue: Double = 1.0
@@ -124,7 +125,7 @@ class TriggerData(
     fun copy(
         dispatcher: Dispatcher<*> = this.dispatcher,
         player: Player? = this.player,
-        victim: LivingEntity? = this.victim,
+        victim: Entity? = this.victim,
         block: Block? = this.block,
         event: Event? = this.event,
         location: Location? = this.location,
