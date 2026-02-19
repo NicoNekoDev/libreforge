@@ -1,6 +1,7 @@
 package com.willfp.libreforge.triggers.impl
 
 import com.willfp.eco.core.Prerequisite
+import com.willfp.libreforge.plugin
 import com.willfp.libreforge.toDispatcher
 import com.willfp.libreforge.triggers.Trigger
 import com.willfp.libreforge.triggers.TriggerData
@@ -37,16 +38,18 @@ object TriggerMove : Trigger("move") {
             0.0
         }
 
-        this.dispatch(
-            entity.toDispatcher(),
-            TriggerData(
-                location = entity.location,
-                velocity = entity.velocity,
-                event = event,
-                item = entity.equipment?.itemInMainHand,
-                value = distance
+        plugin.scheduler.runTask(entity) { // folia issue
+            this.dispatch(
+                entity.toDispatcher(),
+                TriggerData(
+                    location = entity.location,
+                    velocity = entity.velocity,
+                    event = event,
+                    item = entity.equipment?.itemInMainHand,
+                    value = distance
+                )
             )
-        )
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
