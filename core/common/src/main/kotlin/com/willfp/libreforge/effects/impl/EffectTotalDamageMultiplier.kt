@@ -8,6 +8,8 @@ import com.willfp.libreforge.effects.RunOrder
 import com.willfp.libreforge.getDoubleFromExpression
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
+import io.lumine.mythic.bukkit.events.MythicDamageEvent
+import org.bukkit.Bukkit
 import org.bukkit.event.entity.EntityDamageEvent
 
 object EffectTotalDamageMultiplier : Effect<NoCompileData>("total_damage_multiplier") {
@@ -24,9 +26,20 @@ object EffectTotalDamageMultiplier : Effect<NoCompileData>("total_damage_multipl
     override val runOrder = RunOrder.END
 
     override fun onTrigger(config: Config, data: TriggerData, compileData: NoCompileData): Boolean {
-        val event = data.event as? EntityDamageEvent ?: return false
-        event.damage *= config.getDoubleFromExpression("multiplier", data)
+        val multiplier = config.getDoubleFromExpression("multiplier", data)
 
-        return true
+        val event = data.event
+
+        if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs") && event is MythicDamageEvent) {
+            event.damage *= multiplier
+            return true
+        }
+
+        if (event is EntityDamageEvent) {
+            event.damage *= multiplier
+            return true
+        }
+
+        return false
     }
 }

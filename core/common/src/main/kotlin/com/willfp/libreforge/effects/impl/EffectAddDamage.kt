@@ -8,6 +8,7 @@ import com.willfp.libreforge.effects.RunOrder
 import com.willfp.libreforge.getDoubleFromExpression
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
+import io.lumine.mythic.bukkit.events.MythicDamageEvent
 import org.bukkit.Bukkit
 import org.bukkit.event.entity.EntityDamageEvent
 
@@ -29,7 +30,7 @@ object EffectAddDamage : Effect<NoCompileData>("add_damage") {
 
         val event = data.event
 
-        if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs") && event is io.lumine.mythic.bukkit.events.MythicDamageEvent) {
+        if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs") && event is MythicDamageEvent) {
             event.damage += damage
             return true
         }

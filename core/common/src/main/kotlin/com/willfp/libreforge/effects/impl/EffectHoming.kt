@@ -94,11 +94,11 @@ object EffectHoming : Effect<List<TestableEntity>>("homing") {
             checks++
 
             if (checks > MAX_CHECKS) {
-                task.cancel()
+                task.cancelTask()
             }
 
             if (arrow.isDead || arrow.isInBlock || arrow.isOnGround) {
-                task.cancel()
+                task.cancelTask()
             }
 
             val entities = arrow.getNearbyEntities(distance, distance, distance)
@@ -116,7 +116,7 @@ object EffectHoming : Effect<List<TestableEntity>>("homing") {
                 val dist = arrow.location.toFloat3().distance(entity.eyeLocation.toFloat3())
 
                 if (dist < 1.0) {
-                    task.cancel()
+                    task.cancelTask()
                     break
                 }
 

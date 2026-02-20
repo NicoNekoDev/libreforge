@@ -169,7 +169,7 @@ abstract class ElementLike : ConfigurableElement {
                 trigger()
 
                 if (repeats >= repeatTimes) {
-                    task.cancel()
+                    task.cancelTask()
                 }
             }.runTaskTimer(delay, delay)
         }
