@@ -1,15 +1,13 @@
 package com.willfp.libreforge.commands
 
-import com.willfp.eco.core.EcoPlugin
 import com.willfp.eco.core.Prerequisite
 import com.willfp.eco.core.command.impl.Subcommand
 import com.willfp.eco.util.StringUtils
 import com.willfp.eco.util.toNiceString
+import com.willfp.libreforge.plugin
 import org.bukkit.command.CommandSender
 
-internal class CommandReload(
-    plugin: EcoPlugin
-) : Subcommand(
+internal object CommandReload : Subcommand(
     plugin,
     "reload",
     "libreforge.command.reload",

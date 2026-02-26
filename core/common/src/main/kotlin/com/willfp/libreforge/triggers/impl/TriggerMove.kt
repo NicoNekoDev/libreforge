@@ -38,7 +38,7 @@ object TriggerMove : Trigger("move") {
             0.0
         }
 
-        plugin.scheduler.runTask(entity) { // folia issue
+        val runnable = Runnable {
             this.dispatch(
                 entity.toDispatcher(),
                 TriggerData(
@@ -50,6 +50,12 @@ object TriggerMove : Trigger("move") {
                 )
             )
         }
+
+        if (Prerequisite.HAS_FOLIA.isMet) {
+            if (entity.isValid) // folia issue, sometimes entity moves when is dead, making the task impossible
+                plugin.scheduler.runTask(entity, runnable)
+        } else
+            runnable.run()
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -68,16 +74,24 @@ object TriggerMove : Trigger("move") {
             0.0
         }
 
-        this.dispatch(
-            player.toDispatcher(),
-            TriggerData(
-                player = player,
-                location = player.location,
-                velocity = player.velocity,
-                event = event,
-                item = player.equipment.itemInMainHand,
-                value = distance
+        val runnable = Runnable {
+            this.dispatch(
+                player.toDispatcher(),
+                TriggerData(
+                    player = player,
+                    location = player.location,
+                    velocity = player.velocity,
+                    event = event,
+                    item = player.equipment.itemInMainHand,
+                    value = distance
+                )
             )
-        )
+        }
+
+        if (Prerequisite.HAS_FOLIA.isMet) {
+            if (player.isValid) // folia issue, sometimes player moves when is dead, making the task impossible
+                plugin.scheduler.runTask(player, runnable)
+        } else
+            runnable.run()
     }
 }

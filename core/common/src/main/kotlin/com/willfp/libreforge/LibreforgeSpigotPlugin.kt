@@ -203,8 +203,8 @@ class LibreforgeSpigotPlugin : EcoPlugin() {
     override fun loadListeners(): List<Listener> {
         val listeners = mutableListOf(
             EffectDataFixer,
-            ItemRefreshListener(this),
-            EntityRefreshListener(this)
+            ItemRefreshListener,
+            EntityRefreshListener
         )
 
         if (Prerequisite.HAS_PAPER.isMet) {
@@ -249,8 +249,8 @@ class LibreforgeSpigotPlugin : EcoPlugin() {
 
     override fun loadPluginCommands(): List<PluginCommand> {
         return listOf(
-            CommandLrcdb(this),
-            CommandLibreforge(this)
+            CommandLrcdb,
+            CommandLibreforge
         )
     }
 
