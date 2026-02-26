@@ -102,7 +102,7 @@ object EffectParticleAnimation : Effect<ParticleAnimationBlock<*>?>("particle_an
                         player
                     )
                 }) {
-                it.cancel()
+                it.cancelTask()
             }
 
             tick++

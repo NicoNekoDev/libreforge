@@ -144,7 +144,7 @@ object EffectHoming : Effect<List<TestableEntity>>("homing") {
                 arrow.velocity = lerp(arrow.velocity.toFloat3(), targetVelocity, 1 - SMOOTHNESS).toVector()
             }
 
-        }.runTaskTimer(3L, CHECK_DELAY)
+        }.runTaskTimer(arrow, 3L, CHECK_DELAY)
     }
 
     override fun makeCompileData(config: Config, context: ViolationContext): List<TestableEntity> {
