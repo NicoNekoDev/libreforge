@@ -23,6 +23,8 @@ object EffectJobsXpMultiplier : MultiMultiplierEffect<Job>("jobs_xp_multiplier")
     fun handle(event: JobsExpGainEvent) {
         val player = event.player as? Player ?: return
 
-        event.exp *= getMultiplier(player.toDispatcher(), event.job)
+        val multiplier = getMultiplier(player.toDispatcher(), event.job)
+
+        event.exp *= multiplier
     }
 }

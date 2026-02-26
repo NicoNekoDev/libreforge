@@ -103,13 +103,15 @@ object EffectPotionDurationMultiplier : MultiplierEffect("potion_duration_multip
 
             for (effect in effects) {
                 val newDuration = (effect.duration * multiplier * intensity).toInt()
-                entity.addPotionEffect(
-                    PotionEffect(
-                        effect.type,
-                        newDuration,
-                        effect.amplifier
+                plugin.scheduler.runTask(entity) {
+                    entity.addPotionEffect(
+                        PotionEffect(
+                            effect.type,
+                            newDuration,
+                            effect.amplifier
+                        )
                     )
-                )
+                }
             }
         }
     }

@@ -51,36 +51,37 @@ object EffectPermanentPotionEffect : Effect<NoCompileData>("permanent_potion_eff
     }
 
     private fun refreshEffectsOfType(player: Player, type: PotionEffectType) {
-        player.removePotionEffect(type)
-        val active = getHolderData(player)
-            .values
-            .filter { it.effectType == type }
-        if (active.isEmpty()) return
-        val best = active.maxByOrNull { it.level }!!
-        val effect = PotionEffect(
-            type,
-            DURATION,
-            best.level,
-            false,
-            active.any { it.particles },
-            active.any { it.icon }
-        )
-        player.addPotionEffect(effect)
+        plugin.scheduler.runTask(player) {
+            player.removePotionEffect(type)
+            val active = getHolderData(player)
+                .values
+                .filter { it.effectType == type }
+            if (active.isEmpty()) return@runTask
+            val best = active.maxByOrNull { it.level }!!
+            val effect = PotionEffect(
+                type,
+                DURATION,
+                best.level,
+                false,
+                active.any { it.particles },
+                active.any { it.icon }
+            )
+            player.addPotionEffect(effect)
+        }
     }
 
     @EventHandler
     fun onRespawn(event: PlayerRespawnEvent) {
         val player = event.player
 
-        plugin.server.scheduler.runTask(plugin, Runnable {
+        plugin.scheduler.runTask(player) {
             val types = getHolderData(player)
                 .values
                 .map { it.effectType }
                 .toSet()
 
             types.forEach { refreshEffectsOfType(player, it) }
-            }
-        )
+        }
     }
 
     override fun onEnable(

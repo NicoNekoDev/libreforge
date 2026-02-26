@@ -5,6 +5,7 @@ import com.willfp.libreforge.NoCompileData
 import com.willfp.libreforge.arguments
 import com.willfp.libreforge.effects.Effect
 import com.willfp.libreforge.getIntFromExpression
+import com.willfp.libreforge.plugin
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
 import org.bukkit.entity.LivingEntity
@@ -37,18 +38,20 @@ object EffectPotionEffect : Effect<NoCompileData>("potion_effect") {
             data.victim as? LivingEntity ?: return false
         }
 
-        toApply.addPotionEffect(
-            PotionEffect(
-                @Suppress("DEPRECATION")
-                PotionEffectType.getByName(config.getString("effect").uppercase())
-                    ?: PotionEffectType.LUCK,
-                config.getIntFromExpression("duration", data),
-                config.getIntFromExpression("level", data) - 1,
-                true,
-                config.getBoolOrNull("particles") ?: true,
-                config.getBoolOrNull("icon") ?: true
+        plugin.scheduler.runTask(toApply) {
+            toApply.addPotionEffect(
+                PotionEffect(
+                    @Suppress("DEPRECATION")
+                    PotionEffectType.getByName(config.getString("effect").uppercase())
+                        ?: PotionEffectType.LUCK,
+                    config.getIntFromExpression("duration", data),
+                    config.getIntFromExpression("level", data) - 1,
+                    true,
+                    config.getBoolOrNull("particles") ?: true,
+                    config.getBoolOrNull("icon") ?: true
+                )
             )
-        )
+        }
 
         return true
     }
