@@ -2,7 +2,6 @@ package com.willfp.libreforge.effects.impl
 
 import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.eco.core.integrations.antigrief.AntigriefManager
-import com.willfp.eco.util.containsIgnoreCase
 import com.willfp.eco.util.simplify
 import com.willfp.libreforge.NoCompileData
 import com.willfp.libreforge.arguments
@@ -35,13 +34,25 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
         }
 
         val whitelist = config.getStringsOrNull("whitelist")
+            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }
 
-        val blocks = mutableSetOf<Block>()
+        val blacklist = config.getStringsOrNull("blacklisted_blocks")
+            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }
+
+        val blocks = mutableListOf<Block>()
 
         val ignoreVector = player.location.direction.simplify()
 
-        for (x in (-radius..radius)) {
-            for (y in (-radius..radius)) {
+        val checkHardness = config.getBool("check_hardness")
+
+        for (y in (-radius..radius)) {
+            val endY = block.y + y
+
+            if (endY !in world.minHeight..world.maxHeight) {
+                continue
+            }
+
+            for (x in (-radius..radius)) {
                 for (z in (-radius..radius)) {
                     // Jank
                     if (ignoreVector.x != 0.0 && x != 0) {
@@ -74,12 +85,6 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
                         }
                     }
 
-                    val endY = block.y + y
-
-                    if (endY !in world.minHeight..world.maxHeight) {
-                        continue
-                    }
-
                     val toBreak = world.getBlockAt(block.x + x, block.y + y, block.z + z)
 
                     if (toBreak.type == Material.AIR) {
@@ -94,20 +99,20 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
                         continue
                     }
 
-                    if (config.getStrings("blacklisted_blocks").containsIgnoreCase(toBreak.type.name)) {
-                        continue
+                    if (blacklist != null) {
+                        if (toBreak.type in blacklist) {
+                            continue
+                        }
                     }
 
                     if (whitelist != null) {
-                        if (!whitelist.containsIgnoreCase(toBreak.type.name)) {
+                        if (toBreak.type !in whitelist) {
                             continue
                         }
                     }
 
-                    if (config.getBoolOrNull("check_hardness") != false) {
-                        if (toBreak.type.hardness > block.type.hardness) {
-                            continue
-                        }
+                    if (checkHardness && toBreak.type.hardness > block.type.hardness) {
+                        continue
                     }
 
                     blocks.add(toBreak)

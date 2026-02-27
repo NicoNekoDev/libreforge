@@ -3,7 +3,6 @@ package com.willfp.libreforge.effects.impl
 import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.eco.core.integrations.antigrief.AntigriefManager
 import com.willfp.eco.util.VectorUtils
-import com.willfp.eco.util.containsIgnoreCase
 import com.willfp.libreforge.NoCompileData
 import com.willfp.libreforge.arguments
 import com.willfp.libreforge.effects.templates.MineBlockEffect
@@ -36,8 +35,14 @@ object EffectDrill : MineBlockEffect<NoCompileData>("drill") {
         }
 
         val whitelist = config.getStringsOrNull("whitelist")
+            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }
 
-        val blocks = mutableSetOf<Block>()
+        val blacklist = config.getStringsOrNull("blacklisted_blocks")
+            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }
+
+        val blocks = mutableListOf<Block>()
+
+        val checkHardness = config.getBool("check_hardness")
 
         for (i in 1..amount) {
             val simplified = VectorUtils.simplifyVector(player.location.direction.normalize()).multiply(i)
@@ -55,20 +60,20 @@ object EffectDrill : MineBlockEffect<NoCompileData>("drill") {
                 continue
             }
 
-            if (config.getStrings("blacklisted_blocks").containsIgnoreCase(toBreak.type.name)) {
-                continue
+            if (blacklist != null) {
+                if (toBreak.type in blacklist) {
+                    continue
+                }
             }
 
             if (whitelist != null) {
-                if (!whitelist.containsIgnoreCase(toBreak.type.name)) {
+                if (toBreak.type !in whitelist) {
                     continue
                 }
             }
 
-            if (config.getBool("check_hardness")) {
-                if (toBreak.type.hardness > block.type.hardness) {
-                    continue
-                }
+            if (checkHardness && toBreak.type.hardness > block.type.hardness) {
+                continue
             }
 
             blocks.add(toBreak)
