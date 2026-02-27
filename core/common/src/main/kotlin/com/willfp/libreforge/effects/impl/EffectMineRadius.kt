@@ -75,7 +75,7 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                     }
 
                     if (config.getBoolOrNull("check_hardness") != false) {
-                        if (toBreak.type.hardness < 0 || toBreak.type.hardness > block.type.hardness) {
+                        if (toBreak.type.hardness > block.type.hardness) {
                             continue
                         }
                     }

@@ -10,6 +10,7 @@ import com.willfp.libreforge.effects.templates.MineBlockEffect
 import com.willfp.libreforge.getIntFromExpression
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
+import org.bukkit.Material
 import org.bukkit.block.Block
 
 
@@ -42,6 +43,18 @@ object EffectDrill : MineBlockEffect<NoCompileData>("drill") {
             val simplified = VectorUtils.simplifyVector(player.location.direction.normalize()).multiply(i)
             val toBreak = block.world.getBlockAt(block.location.clone().add(simplified))
 
+            if (toBreak.type == Material.AIR) {
+                continue
+            }
+
+            if (toBreak.type.hardness < 0) {
+                continue
+            }
+
+            if (!AntigriefManager.canBreakBlock(player, toBreak)) {
+                continue
+            }
+
             if (config.getStrings("blacklisted_blocks").containsIgnoreCase(toBreak.type.name)) {
                 continue
             }
@@ -56,14 +69,6 @@ object EffectDrill : MineBlockEffect<NoCompileData>("drill") {
                 if (toBreak.type.hardness > block.type.hardness) {
                     continue
                 }
-            }
-
-            if (!AntigriefManager.canBreakBlock(player, toBreak)) {
-                continue
-            }
-
-            if (toBreak.type.hardness < 0) {
-                continue
             }
 
             blocks.add(toBreak)

@@ -26,6 +26,7 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
     override fun onTrigger(config: Config, data: TriggerData, compileData: NoCompileData): Boolean {
         val block = data.block ?: data.location?.block ?: return false
         val player = data.player ?: return false
+        val world = block.world
 
         val radius = config.getIntFromExpression("radius", data)
 
@@ -73,11 +74,23 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
                         }
                     }
 
-                    val toBreak = block.world.getBlockAt(
-                        block.location.clone().add(x.toDouble(), y.toDouble(), z.toDouble())
-                    )
+                    val endY = block.y + y
 
-                    if (toBreak.location.blockY !in block.world.minHeight..block.world.maxHeight) {
+                    if (endY !in world.minHeight..world.maxHeight) {
+                        continue
+                    }
+
+                    val toBreak = world.getBlockAt(block.x + x, block.y + y, block.z + z)
+
+                    if (toBreak.type == Material.AIR) {
+                        continue
+                    }
+
+                    if (toBreak.type.hardness < 0) {
+                        continue
+                    }
+
+                    if (!AntigriefManager.canBreakBlock(player, toBreak)) {
                         continue
                     }
 
@@ -95,18 +108,6 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
                         if (toBreak.type.hardness > block.type.hardness) {
                             continue
                         }
-                    }
-
-                    if (toBreak.type.hardness < 0) {
-                        continue
-                    }
-
-                    if (toBreak.type == Material.AIR) {
-                        continue
-                    }
-
-                    if (!AntigriefManager.canBreakBlock(player, toBreak)) {
-                        continue
                     }
 
                     blocks.add(toBreak)
