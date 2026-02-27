@@ -1,6 +1,7 @@
 package com.willfp.libreforge.triggers.impl
 
 import com.willfp.eco.core.Prerequisite
+import com.willfp.libreforge.plugin
 import com.willfp.libreforge.toDispatcher
 import com.willfp.libreforge.triggers.Trigger
 import com.willfp.libreforge.triggers.TriggerData
@@ -36,15 +37,23 @@ object TriggerChangeChunk : Trigger("change_chunk") {
             return
         }
 
-        this.dispatch(
-            entity.toDispatcher(), TriggerData(
-                victim = entity,
-                location = event.to,
-                velocity = entity.velocity,
-                event = event,
-                item = entity.equipment?.itemInMainHand
+        val runnable = Runnable {
+            this.dispatch(
+                entity.toDispatcher(), TriggerData(
+                    victim = entity,
+                    location = event.to,
+                    velocity = entity.velocity,
+                    event = event,
+                    item = entity.equipment?.itemInMainHand
+                )
             )
-        )
+        }
+
+        if (Prerequisite.HAS_FOLIA.isMet) {
+            if (entity.isValid) // folia issue, sometimes entity moves when is dead, making the task impossible
+                plugin.scheduler.runTask(entity, runnable)
+        } else
+            runnable.run()
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -61,15 +70,23 @@ object TriggerChangeChunk : Trigger("change_chunk") {
             return
         }
 
-        this.dispatch(
-            player.toDispatcher(),
-            TriggerData(
-                player = player,
-                location = player.location,
-                velocity = player.velocity,
-                event = event,
-                item = player.equipment.itemInMainHand,
+        val runnable = Runnable {
+            this.dispatch(
+                player.toDispatcher(),
+                TriggerData(
+                    player = player,
+                    location = player.location,
+                    velocity = player.velocity,
+                    event = event,
+                    item = player.equipment.itemInMainHand,
+                )
             )
-        )
+        }
+
+        if (Prerequisite.HAS_FOLIA.isMet) {
+            if (player.isValid) // folia issue, sometimes player moves when is dead, making the task impossible
+                plugin.scheduler.runTask(player, runnable)
+        } else
+            runnable.run()
     }
 }
