@@ -163,7 +163,12 @@ class LibreforgeSpigotPlugin : EcoPlugin() {
                     continue
                 }
 
-                player.toDispatcher().refreshHolders()
+                if (Prerequisite.HAS_FOLIA.isMet) { // folia issue
+                    plugin.scheduler.runTask(player) {
+                        player.toDispatcher().refreshHolders()
+                    }
+                } else
+                    player.toDispatcher().refreshHolders()
             }
         }
 
