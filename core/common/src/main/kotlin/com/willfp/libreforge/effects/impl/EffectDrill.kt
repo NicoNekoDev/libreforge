@@ -79,7 +79,7 @@ object EffectDrill : MineBlockEffect<NoCompileData>("drill") {
             blocks.add(toBreak)
         }
 
-        player.breakBlocksSafely(blocks)
+        player.breakBlocksSafely(player.inventory.itemInMainHand, blocks)
 
         return true
     }

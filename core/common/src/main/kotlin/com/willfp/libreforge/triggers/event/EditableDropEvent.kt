@@ -1,5 +1,6 @@
 package com.willfp.libreforge.triggers.event
 
+import com.willfp.eco.core.events.MultiBlockItemDropEvent
 import com.willfp.eco.util.toSingletonList
 import com.willfp.libreforge.plugin
 import org.bukkit.Location
@@ -131,6 +132,40 @@ class EditableBlockDropEvent(
 
     override fun removeItem(item: ItemStack) {
         event.items.removeIf { it.itemStack == item }
+    }
+
+    override fun isCancelled(): Boolean {
+        return event.isCancelled
+    }
+
+    override fun setCancelled(p0: Boolean) {
+        event.isCancelled = p0
+    }
+}
+
+class EditableMultiBlockDropEvent(
+    private val event: MultiBlockItemDropEvent
+) : EditableDropEvent() {
+    private val modifiers = mutableListOf<DropModifier>()
+
+    override fun addModifier(modifier: DropModifier) {
+        modifiers += modifier
+    }
+
+    override val originalItems: List<ItemStack>
+        get() = event.blocks.flatMap { event.getItems(it) }.map { it.itemStack }
+
+    override val items: List<DropResult>
+        get() = originalItems.map { modifiers.modify(it) }
+
+    override val dropLocation: Location
+        get() = event.player.location
+
+    override fun removeItem(item: ItemStack) {
+        event.blocks.map { event.getItems(it) }
+            .forEach { list ->
+                list.removeIf { it.itemStack == item }
+            }
     }
 
     override fun isCancelled(): Boolean {

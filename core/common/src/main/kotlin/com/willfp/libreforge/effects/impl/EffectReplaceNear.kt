@@ -1,6 +1,7 @@
 package com.willfp.libreforge.effects.impl
 
 import com.willfp.eco.core.config.interfaces.Config
+import com.willfp.eco.core.events.MultiBlockBreakEvent
 import com.willfp.eco.core.integrations.antigrief.AntigriefManager
 import com.willfp.eco.core.items.Items
 import com.willfp.eco.util.containsIgnoreCase
@@ -128,5 +129,18 @@ object EffectReplaceNear : Effect<NoCompileData>("replace_near") {
         block.removeMetadata("rn-block", plugin)
         block.type = Material.AIR
         event.isCancelled = true
+    }
+
+    @EventHandler
+    fun onBreak(event: MultiBlockBreakEvent) {
+        for (block in event.blocks) {
+            if (!block.hasMetadata("rn-block")) {
+                return
+            }
+
+            block.removeMetadata("rn-block", plugin)
+            block.type = Material.AIR
+            event.blocks.remove(block)
+        }
     }
 }

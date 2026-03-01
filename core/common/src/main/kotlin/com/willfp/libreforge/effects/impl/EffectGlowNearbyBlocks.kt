@@ -3,6 +3,7 @@
 package com.willfp.libreforge.effects.impl
 
 import com.willfp.eco.core.config.interfaces.Config
+import com.willfp.eco.core.events.MultiBlockBreakEvent
 import com.willfp.eco.util.TeamUtils
 import com.willfp.libreforge.NoCompileData
 import com.willfp.libreforge.arguments
@@ -137,6 +138,37 @@ object EffectGlowNearbyBlocks : Effect<NoCompileData>("glow_nearby_blocks") {
         ) { it.hasMetadata("gnb-shulker") }) {
             plugin.scheduler.runTask(shulker) {
                 shulker.remove()
+            }
+        }
+    }
+
+    @EventHandler
+    fun onBreak(event: MultiBlockBreakEvent) {
+        for (block in event.blocks) {
+            if (!block.hasMetadata("gnb-uuid")) {
+                return
+            }
+
+            val uuid = block.getMetadata("gnb-uuid").firstOrNull {
+                it.value() is UUID
+            }?.value() as? UUID ?: return
+
+            val toRemove = Bukkit.getServer().getEntity(uuid)
+            toRemove?.let {
+                plugin.scheduler.runTask(it) {
+                    it.remove()
+                }
+            }
+
+            for (shulker in block.location.world.getNearbyEntities(
+                block.location,
+                2.0,
+                2.0,
+                2.0
+            ) { it.hasMetadata("gnb-shulker") }) {
+                plugin.scheduler.runTask(shulker) {
+                    shulker.remove()
+                }
             }
         }
     }
