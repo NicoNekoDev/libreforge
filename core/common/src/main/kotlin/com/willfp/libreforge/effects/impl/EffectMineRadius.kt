@@ -88,7 +88,7 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
             }
         }
 
-        player.breakBlocksSafely(blocks)
+        player.breakBlocksSafely(player.inventory.itemInMainHand, blocks)
 
         return true
     }
