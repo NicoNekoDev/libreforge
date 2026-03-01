@@ -87,12 +87,15 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
                         return@runExempted
                 }
 
-                for ((block, entry) in blockList) {
+                val iter = blockList.iterator()
+                while (iter.hasNext()) {
+                    val (block, entry) = iter.next()
                     block.setMetadata(ignoreKey, plugin.createMetadataValue(true))
                     block.type = Material.AIR
                     if (multiBlockBreak.isDropItems(block))
                         entry.items.forEach { it.spawnAt(block.location.toCenterLocation()) }
                     block.removeMetadata(ignoreKey, plugin)
+                    iter.remove()
                 }
             }
         }

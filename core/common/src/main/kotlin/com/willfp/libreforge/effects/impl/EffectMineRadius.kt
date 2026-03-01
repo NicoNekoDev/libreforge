@@ -103,13 +103,13 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
             val checkTool = animation.getBoolOrNull("check-tool") ?: true
             val delay = max(1, animation.getIntOrNull("delay") ?: 1)
             val blocksPerTick = animation.getIntOrNull("blocks-per-tick") ?: 1
-            val reverse = animation.getBool("reversed")
+            val reverse = animation.getBoolOrNull("reversed") ?: false
 
             val tool = player.inventory.itemInMainHand
 
             if (type.equals("layers", ignoreCase = true)) {
                 if (from.equals("center", ignoreCase = true)) {
-                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                    val sortedBlocks = blocks.sortedWith(compareBy { b ->
                         val dx = b.x - block.x
                         val dy = b.y - block.y
                         val dz = b.z - block.z
@@ -117,8 +117,8 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                     }).applyIf(reverse) { reversed() }
 
                     val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
-                    for (b in blocksSorted) {
-                        // Primary: Chebyshev distance from center
+
+                    for (b in sortedBlocks) {
                         val distance = maxOf(
                             abs(b.x - block.x),
                             abs(b.y - block.y),
@@ -126,6 +126,8 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         )
                         blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
                     }
+
+                    blocks.clear()
 
                     val sortedDistances = blocksByDistance.keys.sorted()
                     var currentDistanceIndex = 0
@@ -144,34 +146,34 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             }
                         }
 
-                        val currentHeight = sortedDistances[currentDistanceIndex]
-                        val layerBlocks = blocksByDistance[currentHeight]?.toList() ?: emptyList()
+                        val currentDistance = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentDistance] ?: mutableListOf()
 
                         val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
                         val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
 
-                        if (blocksToBreak.isNotEmpty()) {
+                        if (blocksToBreak.isNotEmpty())
                             player.breakBlocksSafely(tool, blocksToBreak)
-                        }
 
                         currentBlockInDistance = endIndex
 
                         if (currentBlockInDistance >= layerBlocks.size) {
+                            blocksByDistance.remove(currentDistance)
                             currentDistanceIndex++
                             currentBlockInDistance = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 } else if (from.equals("outside", ignoreCase = true)) {
-                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                    val sortedBlocks = blocks.sortedWith(compareBy { b ->
                         val dx = b.x - block.x
                         val dy = b.y - block.y
                         val dz = b.z - block.z
                         sqrt((dx * dx + dy * dy + dz * dz).toDouble())
-                    }.apply { if (!reverse) reversed() })
+                    }).applyIf(!reverse) { reversed() }
 
                     val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
-                    for (b in blocksSorted) {
-                        // Primary: Chebyshev distance from center
+
+                    for (b in sortedBlocks) {
                         val distance = maxOf(
                             abs(b.x - block.x),
                             abs(b.y - block.y),
@@ -179,6 +181,8 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         )
                         blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
                     }
+
+                    blocks.clear()
 
                     val sortedDistances = blocksByDistance.keys.sortedDescending()
                     var currentDistanceIndex = 0
@@ -197,28 +201,31 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             }
                         }
 
-                        val currentHeight = sortedDistances[currentDistanceIndex]
-                        val layerBlocks = blocksByDistance[currentHeight]?.toList() ?: emptyList()
+                        val currentDistance = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentDistance] ?: emptyList()
 
                         val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
                         val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
 
-                        if (blocksToBreak.isNotEmpty()) {
+                        if (blocksToBreak.isNotEmpty())
                             player.breakBlocksSafely(tool, blocksToBreak)
-                        }
 
                         currentBlockInDistance = endIndex
 
                         if (currentBlockInDistance >= layerBlocks.size) {
+                            blocksByDistance.remove(currentDistance)
                             currentDistanceIndex++
                             currentBlockInDistance = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 } else if (from.equals("above", ignoreCase = true)) {
                     val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
+
                     for (b in blocks) {
                         blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
                     }
+
+                    blocks.clear()
 
                     val sortedHeights = blocksByHeight.keys.sortedDescending()
                     var currentHeightIndex = 0
@@ -238,27 +245,30 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         }
 
                         val currentHeight = sortedHeights[currentHeightIndex]
-                        val layerBlocks = blocksByHeight[currentHeight]?.toList() ?: emptyList()
+                        val layerBlocks = blocksByHeight[currentHeight] ?: emptyList()
 
                         val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
-                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex).toSet()
+                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex)
 
-                        if (blocksToBreak.isNotEmpty()) {
+                        if (blocksToBreak.isNotEmpty())
                             player.breakBlocksSafely(tool, blocksToBreak)
-                        }
 
                         currentBlockInHeight = endIndex
 
                         if (currentBlockInHeight >= layerBlocks.size) {
+                            blocksByHeight.remove(currentHeight)
                             currentHeightIndex++
                             currentBlockInHeight = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 } else if (from.equals("below", ignoreCase = true)) {
                     val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
+
                     for (b in blocks) {
                         blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
                     }
+
+                    blocks.clear()
 
                     val sortedHeights = blocksByHeight.keys.sorted()
                     var currentHeightIndex = 0
@@ -278,39 +288,39 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         }
 
                         val currentHeight = sortedHeights[currentHeightIndex]
-                        val layerBlocks = blocksByHeight[currentHeight]?.toList() ?: emptyList()
+                        val layerBlocks = blocksByHeight[currentHeight] ?: emptyList()
 
                         val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
-                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex).toSet()
+                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex)
 
-                        if (blocksToBreak.isNotEmpty()) {
+                        if (blocksToBreak.isNotEmpty())
                             player.breakBlocksSafely(tool, blocksToBreak)
-                        }
 
                         currentBlockInHeight = endIndex
 
                         if (currentBlockInHeight >= layerBlocks.size) {
+                            blocksByHeight.remove(currentHeight)
                             currentHeightIndex++
                             currentBlockInHeight = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 }
             } else if (type.equals("spiral", ignoreCase = true)) {
-                val spiralCoords = generateSpiralCoordinates(radius)
+                val spiral = generateSpiral(radius)
 
                 if (from.equals("center", ignoreCase = true)) {
-                    val blocksSorted = blocks.sortedWith(compareBy { b ->
+                    val sortedBlocks = blocks.sortedWith(compareBy { b ->
                         val dx = b.x - block.x
                         val dy = b.y - block.y
                         val dz = b.z - block.z
-                        spiralCoords.indexOf(Pair(dx, dz)) *
-                                spiralCoords.indexOf(Pair(dx, dy)) *
-                                spiralCoords.indexOf(Pair(dz, dy))
-                    }).apply { if (reverse) reversed() }
+                        spiral[Pair(dx, dz)]!! *
+                                spiral[Pair(dx, dy)]!! *
+                                spiral[Pair(dz, dy)]!!
+                    }).applyIf(reverse) { reversed() }
 
                     val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
-                    for (b in blocksSorted) {
-                        // Primary: Chebyshev distance from center
+
+                    for (b in sortedBlocks) {
                         val distance = maxOf(
                             abs(b.x - block.x),
                             abs(b.y - block.y),
@@ -318,6 +328,8 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         )
                         blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
                     }
+
+                    blocks.clear()
 
                     val sortedDistances = blocksByDistance.keys.sorted()
                     var currentDistanceIndex = 0
@@ -336,35 +348,36 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             }
                         }
 
-                        val currentHeight = sortedDistances[currentDistanceIndex]
-                        val layerBlocks = blocksByDistance[currentHeight]?.toList() ?: emptyList()
+                        val currentDistance = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentDistance] ?: emptyList()
 
                         val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
                         val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
 
-                        if (blocksToBreak.isNotEmpty()) {
+                        if (blocksToBreak.isNotEmpty())
                             player.breakBlocksSafely(tool, blocksToBreak)
-                        }
 
                         currentBlockInDistance = endIndex
 
                         if (currentBlockInDistance >= layerBlocks.size) {
+                            blocksByDistance.remove(currentDistance)
                             currentDistanceIndex++
                             currentBlockInDistance = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 } else if (from.equals("outside", ignoreCase = true)) {
-                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                    val sortedBlocks = blocks.sortedWith(compareBy { b ->
                         val dx = b.x - block.x
                         val dy = b.y - block.y
                         val dz = b.z - block.z
-                        spiralCoords.indexOf(Pair(dx, dz)) *
-                                spiralCoords.indexOf(Pair(dx, dy)) *
-                                spiralCoords.indexOf(Pair(dz, dy))
-                    }.apply { if (!reverse) reversed() })
+                        spiral[Pair(dx, dz)]!! *
+                                spiral[Pair(dx, dy)]!! *
+                                spiral[Pair(dz, dy)]!!
+                    }).applyIf(!reverse) { reversed() }
 
                     val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
-                    for (b in blocksSorted) {
+
+                    for (b in sortedBlocks) {
                         // Primary: Chebyshev distance from center
                         val distance = maxOf(
                             abs(b.x - block.x),
@@ -373,6 +386,8 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         )
                         blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
                     }
+
+                    blocks.clear()
 
                     val sortedDistances = blocksByDistance.keys.sortedDescending()
                     var currentDistanceIndex = 0
@@ -391,38 +406,39 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             }
                         }
 
-                        val currentHeight = sortedDistances[currentDistanceIndex]
-                        val layerBlocks = blocksByDistance[currentHeight]?.toList() ?: emptyList()
+                        val currentDistance = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentDistance] ?: emptyList()
 
                         val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
                         val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
 
-                        if (blocksToBreak.isNotEmpty()) {
+                        if (blocksToBreak.isNotEmpty())
                             player.breakBlocksSafely(tool, blocksToBreak)
-                        }
 
                         currentBlockInDistance = endIndex
 
                         if (currentBlockInDistance >= layerBlocks.size) {
+                            blocksByDistance.remove(currentDistance)
                             currentDistanceIndex++
                             currentBlockInDistance = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 } else if (from.equals("above", ignoreCase = true)) {
-                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                    val sortedBlocks = blocks.sortedWith(compareBy { b ->
                         val dx = b.x - block.x
                         val dz = b.z - block.z
-                        spiralCoords.indexOf(Pair(dx, dz))
-                    }.apply { if (reverse) reversed() })
+                        spiral[Pair(dx, dz)]!!
+                    }).applyIf(reverse) { reversed() }
 
-                    val blocksByHeight = mutableMapOf<Int, MutableSet<Block>>()
-                    for (b in blocksSorted) {
-                        blocksByHeight.getOrPut(b.y) { mutableSetOf() }.add(b)
+                    val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
+
+                    for (b in sortedBlocks) {
+                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
                     }
 
+                    blocks.clear()
+
                     val sortedHeights = blocksByHeight.keys.sortedDescending()
-
-
                     var currentHeightIndex = 0
                     var currentBlockInHeight = 0
 
@@ -440,36 +456,38 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         }
 
                         val currentHeight = sortedHeights[currentHeightIndex]
-                        val layerBlocks = blocksByHeight[currentHeight]?.toList() ?: emptyList()
+                        val layerBlocks = blocksByHeight[currentHeight] ?: emptyList()
 
                         val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
                         val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex)
 
-                        if (blocksToBreak.isNotEmpty()) {
+                        if (blocksToBreak.isNotEmpty())
                             player.breakBlocksSafely(tool, blocksToBreak)
-                        }
 
                         currentBlockInHeight = endIndex
 
                         if (currentBlockInHeight >= layerBlocks.size) {
+                            blocksByHeight.remove(currentHeight)
                             currentHeightIndex++
                             currentBlockInHeight = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 } else if (from.equals("bellow", ignoreCase = true)) {
-                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                    val sortedBlocks = blocks.sortedWith(compareBy { b ->
                         val dx = b.x - block.x
                         val dz = b.z - block.z
-                        spiralCoords.indexOf(Pair(dx, dz))
-                    }.apply { if (reverse) reversed() })
+                        spiral[Pair(dx, dz)]!!
+                    }).applyIf(reverse) { reversed() }
 
-                    val blocksByHeight = mutableMapOf<Int, MutableSet<Block>>()
-                    for (b in blocksSorted) {
-                        blocksByHeight.getOrPut(b.y) { mutableSetOf() }.add(b)
+                    val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
+
+                    for (b in sortedBlocks) {
+                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
                     }
 
-                    val sortedHeights = blocksByHeight.keys.sorted()
+                    blocks.clear()
 
+                    val sortedHeights = blocksByHeight.keys.sorted()
                     var currentHeightIndex = 0
                     var currentBlockInHeight = 0
 
@@ -487,18 +505,18 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         }
 
                         val currentHeight = sortedHeights[currentHeightIndex]
-                        val layerBlocks = blocksByHeight[currentHeight]?.toList() ?: emptyList()
+                        val layerBlocks = blocksByHeight[currentHeight] ?: emptyList()
 
                         val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
                         val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex)
 
-                        if (blocksToBreak.isNotEmpty()) {
+                        if (blocksToBreak.isNotEmpty())
                             player.breakBlocksSafely(tool, blocksToBreak)
-                        }
 
                         currentBlockInHeight = endIndex
 
                         if (currentBlockInHeight >= layerBlocks.size) {
+                            blocksByHeight.remove(currentHeight)
                             currentHeightIndex++
                             currentBlockInHeight = 0
                         }
@@ -510,8 +528,8 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
         return true
     }
 
-    fun generateSpiralCoordinates(radius: Int): List<Pair<Int, Int>> {
-        val spiral = mutableListOf<Pair<Int, Int>>()
+    fun generateSpiral(radius: Int): Map<Pair<Int, Int>, Int> {
+        val spiral = mutableMapOf<Pair<Int, Int>, Int>()
 
         var x = 0
         var z = 0
@@ -540,7 +558,7 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                 z = x + dz
             }
 
-            spiral.add(Pair(x, z))
+            spiral[Pair(x, z)] = i
             x += dx
             z += dz
         }
