@@ -1,15 +1,20 @@
 package com.willfp.libreforge.effects.impl
 
+import com.nexomc.nexo.utils.applyIf
 import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.eco.core.integrations.antigrief.AntigriefManager
 import com.willfp.libreforge.NoCompileData
 import com.willfp.libreforge.arguments
 import com.willfp.libreforge.effects.templates.MineBlockEffect
 import com.willfp.libreforge.getIntFromExpression
+import com.willfp.libreforge.plugin
 import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
 import org.bukkit.Material
 import org.bukkit.block.Block
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.sqrt
 
 object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
     override val parameters = setOf(
@@ -87,9 +92,459 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                 }
             }
         }
+        val animation = config.getSubsectionOrNull("animation")
 
-        player.breakBlocksSafely(blocks)
+        if (animation == null)
+            player.breakBlocksSafely(player.inventory.itemInMainHand, blocks)
+        else {
+            val type = animation.getString("type")
+            val from = animation.getString("from")
+
+            val checkTool = animation.getBoolOrNull("check-tool") ?: true
+            val delay = max(1, animation.getIntOrNull("delay") ?: 1)
+            val blocksPerTick = animation.getIntOrNull("blocks-per-tick") ?: 1
+            val reverse = animation.getBool("reversed")
+
+            val tool = player.inventory.itemInMainHand
+
+            if (type.equals("layers", ignoreCase = true)) {
+                if (from.equals("center", ignoreCase = true)) {
+                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                        val dx = b.x - block.x
+                        val dy = b.y - block.y
+                        val dz = b.z - block.z
+                        sqrt((dx * dx + dy * dy + dz * dz).toDouble())
+                    }).applyIf(reverse) { reversed() }
+
+                    val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
+                    for (b in blocksSorted) {
+                        // Primary: Chebyshev distance from center
+                        val distance = maxOf(
+                            abs(b.x - block.x),
+                            abs(b.y - block.y),
+                            abs(b.z - block.z)
+                        )
+                        blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
+                    }
+
+                    val sortedDistances = blocksByDistance.keys.sorted()
+                    var currentDistanceIndex = 0
+                    var currentBlockInDistance = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentDistanceIndex >= sortedDistances.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentHeight]?.toList() ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
+
+                        if (blocksToBreak.isNotEmpty()) {
+                            player.breakBlocksSafely(tool, blocksToBreak)
+                        }
+
+                        currentBlockInDistance = endIndex
+
+                        if (currentBlockInDistance >= layerBlocks.size) {
+                            currentDistanceIndex++
+                            currentBlockInDistance = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("outside", ignoreCase = true)) {
+                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                        val dx = b.x - block.x
+                        val dy = b.y - block.y
+                        val dz = b.z - block.z
+                        sqrt((dx * dx + dy * dy + dz * dz).toDouble())
+                    }.apply { if (!reverse) reversed() })
+
+                    val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
+                    for (b in blocksSorted) {
+                        // Primary: Chebyshev distance from center
+                        val distance = maxOf(
+                            abs(b.x - block.x),
+                            abs(b.y - block.y),
+                            abs(b.z - block.z)
+                        )
+                        blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
+                    }
+
+                    val sortedDistances = blocksByDistance.keys.sortedDescending()
+                    var currentDistanceIndex = 0
+                    var currentBlockInDistance = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentDistanceIndex >= sortedDistances.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentHeight]?.toList() ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
+
+                        if (blocksToBreak.isNotEmpty()) {
+                            player.breakBlocksSafely(tool, blocksToBreak)
+                        }
+
+                        currentBlockInDistance = endIndex
+
+                        if (currentBlockInDistance >= layerBlocks.size) {
+                            currentDistanceIndex++
+                            currentBlockInDistance = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("above", ignoreCase = true)) {
+                    val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
+                    for (b in blocks) {
+                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                    }
+
+                    val sortedHeights = blocksByHeight.keys.sortedDescending()
+                    var currentHeightIndex = 0
+                    var currentBlockInHeight = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentHeightIndex >= sortedHeights.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedHeights[currentHeightIndex]
+                        val layerBlocks = blocksByHeight[currentHeight]?.toList() ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex).toSet()
+
+                        if (blocksToBreak.isNotEmpty()) {
+                            player.breakBlocksSafely(tool, blocksToBreak)
+                        }
+
+                        currentBlockInHeight = endIndex
+
+                        if (currentBlockInHeight >= layerBlocks.size) {
+                            currentHeightIndex++
+                            currentBlockInHeight = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("below", ignoreCase = true)) {
+                    val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
+                    for (b in blocks) {
+                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                    }
+
+                    val sortedHeights = blocksByHeight.keys.sorted()
+                    var currentHeightIndex = 0
+                    var currentBlockInHeight = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentHeightIndex >= sortedHeights.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedHeights[currentHeightIndex]
+                        val layerBlocks = blocksByHeight[currentHeight]?.toList() ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex).toSet()
+
+                        if (blocksToBreak.isNotEmpty()) {
+                            player.breakBlocksSafely(tool, blocksToBreak)
+                        }
+
+                        currentBlockInHeight = endIndex
+
+                        if (currentBlockInHeight >= layerBlocks.size) {
+                            currentHeightIndex++
+                            currentBlockInHeight = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                }
+            } else if (type.equals("spiral", ignoreCase = true)) {
+                val spiralCoords = generateSpiralCoordinates(radius)
+
+                if (from.equals("center", ignoreCase = true)) {
+                    val blocksSorted = blocks.sortedWith(compareBy { b ->
+                        val dx = b.x - block.x
+                        val dy = b.y - block.y
+                        val dz = b.z - block.z
+                        spiralCoords.indexOf(Pair(dx, dz)) *
+                                spiralCoords.indexOf(Pair(dx, dy)) *
+                                spiralCoords.indexOf(Pair(dz, dy))
+                    }).apply { if (reverse) reversed() }
+
+                    val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
+                    for (b in blocksSorted) {
+                        // Primary: Chebyshev distance from center
+                        val distance = maxOf(
+                            abs(b.x - block.x),
+                            abs(b.y - block.y),
+                            abs(b.z - block.z)
+                        )
+                        blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
+                    }
+
+                    val sortedDistances = blocksByDistance.keys.sorted()
+                    var currentDistanceIndex = 0
+                    var currentBlockInDistance = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentDistanceIndex >= sortedDistances.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentHeight]?.toList() ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
+
+                        if (blocksToBreak.isNotEmpty()) {
+                            player.breakBlocksSafely(tool, blocksToBreak)
+                        }
+
+                        currentBlockInDistance = endIndex
+
+                        if (currentBlockInDistance >= layerBlocks.size) {
+                            currentDistanceIndex++
+                            currentBlockInDistance = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("outside", ignoreCase = true)) {
+                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                        val dx = b.x - block.x
+                        val dy = b.y - block.y
+                        val dz = b.z - block.z
+                        spiralCoords.indexOf(Pair(dx, dz)) *
+                                spiralCoords.indexOf(Pair(dx, dy)) *
+                                spiralCoords.indexOf(Pair(dz, dy))
+                    }.apply { if (!reverse) reversed() })
+
+                    val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
+                    for (b in blocksSorted) {
+                        // Primary: Chebyshev distance from center
+                        val distance = maxOf(
+                            abs(b.x - block.x),
+                            abs(b.y - block.y),
+                            abs(b.z - block.z)
+                        )
+                        blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
+                    }
+
+                    val sortedDistances = blocksByDistance.keys.sortedDescending()
+                    var currentDistanceIndex = 0
+                    var currentBlockInDistance = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentDistanceIndex >= sortedDistances.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentHeight]?.toList() ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
+
+                        if (blocksToBreak.isNotEmpty()) {
+                            player.breakBlocksSafely(tool, blocksToBreak)
+                        }
+
+                        currentBlockInDistance = endIndex
+
+                        if (currentBlockInDistance >= layerBlocks.size) {
+                            currentDistanceIndex++
+                            currentBlockInDistance = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("above", ignoreCase = true)) {
+                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                        val dx = b.x - block.x
+                        val dz = b.z - block.z
+                        spiralCoords.indexOf(Pair(dx, dz))
+                    }.apply { if (reverse) reversed() })
+
+                    val blocksByHeight = mutableMapOf<Int, MutableSet<Block>>()
+                    for (b in blocksSorted) {
+                        blocksByHeight.getOrPut(b.y) { mutableSetOf() }.add(b)
+                    }
+
+                    val sortedHeights = blocksByHeight.keys.sortedDescending()
+
+
+                    var currentHeightIndex = 0
+                    var currentBlockInHeight = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentHeightIndex >= sortedHeights.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedHeights[currentHeightIndex]
+                        val layerBlocks = blocksByHeight[currentHeight]?.toList() ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex)
+
+                        if (blocksToBreak.isNotEmpty()) {
+                            player.breakBlocksSafely(tool, blocksToBreak)
+                        }
+
+                        currentBlockInHeight = endIndex
+
+                        if (currentBlockInHeight >= layerBlocks.size) {
+                            currentHeightIndex++
+                            currentBlockInHeight = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("bellow", ignoreCase = true)) {
+                    val blocksSorted = blocks.sortedWith(compareBy<Block> { b ->
+                        val dx = b.x - block.x
+                        val dz = b.z - block.z
+                        spiralCoords.indexOf(Pair(dx, dz))
+                    }.apply { if (reverse) reversed() })
+
+                    val blocksByHeight = mutableMapOf<Int, MutableSet<Block>>()
+                    for (b in blocksSorted) {
+                        blocksByHeight.getOrPut(b.y) { mutableSetOf() }.add(b)
+                    }
+
+                    val sortedHeights = blocksByHeight.keys.sorted()
+
+                    var currentHeightIndex = 0
+                    var currentBlockInHeight = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentHeightIndex >= sortedHeights.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedHeights[currentHeightIndex]
+                        val layerBlocks = blocksByHeight[currentHeight]?.toList() ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex)
+
+                        if (blocksToBreak.isNotEmpty()) {
+                            player.breakBlocksSafely(tool, blocksToBreak)
+                        }
+
+                        currentBlockInHeight = endIndex
+
+                        if (currentBlockInHeight >= layerBlocks.size) {
+                            currentHeightIndex++
+                            currentBlockInHeight = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                }
+            }
+        }
 
         return true
+    }
+
+    fun generateSpiralCoordinates(radius: Int): List<Pair<Int, Int>> {
+        val spiral = mutableListOf<Pair<Int, Int>>()
+
+        var x = 0
+        var z = 0
+        var dx = 0
+        var dz = -1
+
+        val n = radius * 2 + 1
+        val m = radius * 2 + 1
+
+        for (i in 0 until n * m) {
+            if ((abs(x) == abs(z) && !(dx == 1 && dz == 0)) ||
+                (x > 0 && z == 1 - x)
+            ) {
+                // Change direction at corners
+                val temp = dx
+                dx = -dz
+                dz = temp
+            }
+
+            if (abs(x) > n / 2 || abs(z) > m / 2) {
+                // Change direction for non-square
+                val temp = dx
+                dx = -dz
+                dz = temp
+                x = -z + dx
+                z = x + dz
+            }
+
+            spiral.add(Pair(x, z))
+            x += dx
+            z += dz
+        }
+
+        return spiral
     }
 }
