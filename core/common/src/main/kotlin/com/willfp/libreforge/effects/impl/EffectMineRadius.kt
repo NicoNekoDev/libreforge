@@ -522,6 +522,224 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 }
+            } else if (type.equals("decay", ignoreCase = true)) {
+                if (from.equals("center", ignoreCase = true)) {
+                    val shuffledBlocks = blocks.shuffled()
+
+                    val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
+
+                    for (b in shuffledBlocks) {
+                        val distance = maxOf(
+                            abs(b.x - block.x),
+                            abs(b.y - block.y),
+                            abs(b.z - block.z)
+                        )
+                        blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
+                    }
+
+                    blocks.clear()
+
+                    val sortedDistances = blocksByDistance.keys.sorted()
+                    var currentDistanceIndex = 0
+                    var currentBlockInDistance = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentDistanceIndex >= sortedDistances.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentDistance = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentDistance] ?: mutableListOf()
+
+                        val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
+
+                        if (blocksToBreak.isNotEmpty())
+                            player.breakBlocksSafely(tool, blocksToBreak)
+
+                        currentBlockInDistance = endIndex
+
+                        if (currentBlockInDistance >= layerBlocks.size) {
+                            blocksByDistance.remove(currentDistance)
+                            currentDistanceIndex++
+                            currentBlockInDistance = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("outside", ignoreCase = true)) {
+                    val shuffledBlocks = blocks.shuffled()
+
+                    val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
+
+                    for (b in shuffledBlocks) {
+                        val distance = maxOf(
+                            abs(b.x - block.x),
+                            abs(b.y - block.y),
+                            abs(b.z - block.z)
+                        )
+                        blocksByDistance.getOrPut(distance) { mutableListOf() }.add(b)
+                    }
+
+                    blocks.clear()
+
+                    val sortedDistances = blocksByDistance.keys.sortedDescending()
+                    var currentDistanceIndex = 0
+                    var currentBlockInDistance = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentDistanceIndex >= sortedDistances.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentDistance = sortedDistances[currentDistanceIndex]
+                        val layerBlocks = blocksByDistance[currentDistance] ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInDistance + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInDistance, endIndex)
+
+                        if (blocksToBreak.isNotEmpty())
+                            player.breakBlocksSafely(tool, blocksToBreak)
+
+                        currentBlockInDistance = endIndex
+
+                        if (currentBlockInDistance >= layerBlocks.size) {
+                            blocksByDistance.remove(currentDistance)
+                            currentDistanceIndex++
+                            currentBlockInDistance = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("above", ignoreCase = true)) {
+                    val shuffledBlocks = blocks.shuffled()
+
+                    val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
+
+                    for (b in shuffledBlocks) {
+                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                    }
+
+                    blocks.clear()
+
+                    val sortedHeights = blocksByHeight.keys.sortedDescending()
+                    var currentHeightIndex = 0
+                    var currentBlockInHeight = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentHeightIndex >= sortedHeights.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedHeights[currentHeightIndex]
+                        val layerBlocks = blocksByHeight[currentHeight] ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex)
+
+                        if (blocksToBreak.isNotEmpty())
+                            player.breakBlocksSafely(tool, blocksToBreak)
+
+                        currentBlockInHeight = endIndex
+
+                        if (currentBlockInHeight >= layerBlocks.size) {
+                            blocksByHeight.remove(currentHeight)
+                            currentHeightIndex++
+                            currentBlockInHeight = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("below", ignoreCase = true)) {
+                    val shuffledBlocks = blocks.shuffled()
+
+                    val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
+
+                    for (b in shuffledBlocks) {
+                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                    }
+
+                    blocks.clear()
+
+                    val sortedHeights = blocksByHeight.keys.sorted()
+                    var currentHeightIndex = 0
+                    var currentBlockInHeight = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentHeightIndex >= sortedHeights.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val currentHeight = sortedHeights[currentHeightIndex]
+                        val layerBlocks = blocksByHeight[currentHeight] ?: emptyList()
+
+                        val endIndex = minOf(currentBlockInHeight + blocksPerTick, layerBlocks.size)
+                        val blocksToBreak = layerBlocks.subList(currentBlockInHeight, endIndex)
+
+                        if (blocksToBreak.isNotEmpty())
+                            player.breakBlocksSafely(tool, blocksToBreak)
+
+                        currentBlockInHeight = endIndex
+
+                        if (currentBlockInHeight >= layerBlocks.size) {
+                            blocksByHeight.remove(currentHeight)
+                            currentHeightIndex++
+                            currentBlockInHeight = 0
+                        }
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                } else if (from.equals("all", ignoreCase = true)) {
+                    val shuffledBlocks = blocks.shuffled()
+
+                    var currentIndex = 0
+
+                    plugin.runnableFactory.create { task ->
+                        if (currentIndex >= shuffledBlocks.size) {
+                            task.cancelTask()
+                            return@create
+                        }
+
+                        if (checkTool) {
+                            if (tool != player.inventory.itemInMainHand) {
+                                task.cancelTask()
+                                return@create
+                            }
+                        }
+
+                        val endIndex = minOf(currentIndex + blocksPerTick, shuffledBlocks.size)
+                        val blocksToBreak = shuffledBlocks.subList(currentIndex, endIndex)
+
+                        if (blocksToBreak.isNotEmpty())
+                            player.breakBlocksSafely(tool, blocksToBreak)
+
+                        currentIndex = endIndex
+                    }.runTaskTimer(block.location, 1, delay.toLong())
+                }
             }
         }
 
