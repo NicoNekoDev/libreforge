@@ -3,6 +3,7 @@ package com.willfp.libreforge.effects.impl
 import com.nexomc.nexo.utils.applyIf
 import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.eco.core.integrations.antigrief.AntigriefManager
+import com.willfp.eco.util.direction
 import com.willfp.libreforge.NoCompileData
 import com.willfp.libreforge.arguments
 import com.willfp.libreforge.effects.templates.MineBlockEffect
@@ -12,6 +13,7 @@ import com.willfp.libreforge.triggers.TriggerData
 import com.willfp.libreforge.triggers.TriggerParameter
 import org.bukkit.Material
 import org.bukkit.block.Block
+import org.bukkit.block.BlockFace
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.sqrt
@@ -218,16 +220,48 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             currentBlockInDistance = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
-                } else if (from.equals("above", ignoreCase = true)) {
+                } else if (
+                    from.equals("south", ignoreCase = true) ||
+                    from.equals("north", ignoreCase = true) ||
+                    from.equals("east", ignoreCase = true) ||
+                    from.equals("west", ignoreCase = true) ||
+                    from.equals("above", ignoreCase = true) ||
+                    from.equals("below", ignoreCase = true)
+                ) {
                     val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
 
                     for (b in blocks) {
-                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                        if (
+                            from.equals("south", ignoreCase = true) ||
+                            from.equals("north", ignoreCase = true)
+                        )
+                            blocksByHeight.getOrPut(b.z) { mutableListOf() }.add(b)
+                        else if (
+                            from.equals("east", ignoreCase = true) ||
+                            from.equals("west", ignoreCase = true)
+                        )
+                            blocksByHeight.getOrPut(b.x) { mutableListOf() }.add(b)
+                        else if (
+                            from.equals("above", ignoreCase = true) ||
+                            from.equals("below", ignoreCase = true)
+                        )
+                            blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
                     }
 
                     blocks.clear()
 
-                    val sortedHeights = blocksByHeight.keys.sortedDescending()
+                    val sortedHeights = blocksByHeight.keys.toList()
+                        .applyIf(
+                            from.equals("south", ignoreCase = true) ||
+                                    from.equals("east", ignoreCase = true) ||
+                                    from.equals("above", ignoreCase = true)
+                        ) { sortedDescending() }
+                        .applyIf(
+                            from.equals("north", ignoreCase = true) ||
+                                    from.equals("west", ignoreCase = true) ||
+                                    from.equals("below", ignoreCase = true)
+                        ) { sorted() }
+
                     var currentHeightIndex = 0
                     var currentBlockInHeight = 0
 
@@ -261,16 +295,42 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             currentBlockInHeight = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
-                } else if (from.equals("below", ignoreCase = true)) {
+                } else if (from.equals("direction", ignoreCase = true)) {
+                    val direction = player.direction.oppositeFace
+
                     val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
 
                     for (b in blocks) {
-                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                        when (direction) {
+                            BlockFace.SOUTH, BlockFace.NORTH
+                                -> blocksByHeight.getOrPut(b.z) { mutableListOf() }
+                                .add(b)
+
+                            BlockFace.EAST, BlockFace.WEST
+                                -> blocksByHeight.getOrPut(b.x) { mutableListOf() }
+                                .add(b)
+
+                            BlockFace.UP, BlockFace.DOWN
+                                -> blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+
+                            else -> return false
+                        }
                     }
 
                     blocks.clear()
 
-                    val sortedHeights = blocksByHeight.keys.sorted()
+                    val sortedHeights = blocksByHeight.keys.toList()
+                        .applyIf(
+                            direction == BlockFace.SOUTH ||
+                                    direction == BlockFace.EAST ||
+                                    direction == BlockFace.UP
+                        ) { sortedDescending() }
+                        .applyIf(
+                            direction == BlockFace.NORTH ||
+                                    direction == BlockFace.WEST ||
+                                    direction == BlockFace.DOWN
+                        ) { sorted() }
+
                     var currentHeightIndex = 0
                     var currentBlockInHeight = 0
 
@@ -423,22 +483,81 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             currentBlockInDistance = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
-                } else if (from.equals("above", ignoreCase = true)) {
-                    val sortedBlocks = blocks.sortedWith(compareBy { b ->
-                        val dx = b.x - block.x
-                        val dz = b.z - block.z
-                        spiral[Pair(dx, dz)]!!
-                    }).applyIf(reverse) { reversed() }
+                } else if (
+                    from.equals("south", ignoreCase = true) ||
+                    from.equals("north", ignoreCase = true) ||
+                    from.equals("east", ignoreCase = true) ||
+                    from.equals("west", ignoreCase = true) ||
+                    from.equals("above", ignoreCase = true) ||
+                    from.equals("below", ignoreCase = true)
+                ) {
+                    val sortedBlocks = blocks.toList()
+                        .applyIf(
+                            from.equals("south", ignoreCase = true) ||
+                                    from.equals("north", ignoreCase = true)
+                        ) {
+                            sortedWith(compareBy { b ->
+                                val dx = b.x - block.x
+                                val dy = b.y - block.y
+                                spiral[Pair(dx, dy)]!!
+                            })
+                        }
+                        .applyIf(
+                            from.equals("east", ignoreCase = true) ||
+                                    from.equals("west", ignoreCase = true)
+                        ) {
+                            sortedWith(compareBy { b ->
+                                val dz = b.z - block.z
+                                val dy = b.y - block.y
+                                spiral[Pair(dz, dy)]!!
+                            })
+                        }
+                        .applyIf(
+                            from.equals("above", ignoreCase = true) ||
+                                    from.equals("below", ignoreCase = true)
+                        ) {
+                            sortedWith(compareBy { b ->
+                                val dx = b.x - block.x
+                                val dz = b.z - block.z
+                                spiral[Pair(dx, dz)]!!
+                            })
+                        }
+                        .applyIf(reverse) { reversed() }
 
                     val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
 
                     for (b in sortedBlocks) {
-                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                        if (
+                            from.equals("south", ignoreCase = true) ||
+                            from.equals("north", ignoreCase = true)
+                        )
+                            blocksByHeight.getOrPut(b.z) { mutableListOf() }.add(b)
+                        else if (
+                            from.equals("east", ignoreCase = true) ||
+                            from.equals("west", ignoreCase = true)
+                        )
+                            blocksByHeight.getOrPut(b.x) { mutableListOf() }.add(b)
+                        else if (
+                            from.equals("above", ignoreCase = true) ||
+                            from.equals("below", ignoreCase = true)
+                        )
+                            blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
                     }
 
                     blocks.clear()
 
-                    val sortedHeights = blocksByHeight.keys.sortedDescending()
+                    val sortedHeights = blocksByHeight.keys.toList()
+                        .applyIf(
+                            from.equals("south", ignoreCase = true) ||
+                                    from.equals("east", ignoreCase = true) ||
+                                    from.equals("above", ignoreCase = true)
+                        ) { sortedDescending() }
+                        .applyIf(
+                            from.equals("north", ignoreCase = true) ||
+                                    from.equals("west", ignoreCase = true) ||
+                                    from.equals("below", ignoreCase = true)
+                        ) { sorted() }
+
                     var currentHeightIndex = 0
                     var currentBlockInHeight = 0
 
@@ -472,22 +591,75 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             currentBlockInHeight = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
-                } else if (from.equals("bellow", ignoreCase = true)) {
-                    val sortedBlocks = blocks.sortedWith(compareBy { b ->
-                        val dx = b.x - block.x
-                        val dz = b.z - block.z
-                        spiral[Pair(dx, dz)]!!
-                    }).applyIf(reverse) { reversed() }
+                } else if (from.equals("direction", ignoreCase = true)) {
+                    val direction = player.direction.oppositeFace
+
+                    val sortedBlocks = blocks.toList()
+                        .applyIf(
+                            direction == BlockFace.SOUTH ||
+                                    direction == BlockFace.NORTH
+                        ) {
+                            sortedWith(compareBy { b ->
+                                val dx = b.x - block.x
+                                val dy = b.y - block.y
+                                spiral[Pair(dx, dy)]!!
+                            })
+                        }
+                        .applyIf(
+                            direction == BlockFace.EAST ||
+                                    direction == BlockFace.WEST
+                        ) {
+                            sortedWith(compareBy { b ->
+                                val dz = b.z - block.z
+                                val dy = b.y - block.y
+                                spiral[Pair(dz, dy)]!!
+                            })
+                        }
+                        .applyIf(
+                            direction == BlockFace.UP ||
+                                    direction == BlockFace.DOWN
+                        ) {
+                            sortedWith(compareBy { b ->
+                                val dx = b.x - block.x
+                                val dz = b.z - block.z
+                                spiral[Pair(dx, dz)]!!
+                            })
+                        }
+                        .applyIf(reverse) { reversed() }
 
                     val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
 
                     for (b in sortedBlocks) {
-                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                        when (direction) {
+                            BlockFace.SOUTH, BlockFace.NORTH
+                                -> blocksByHeight.getOrPut(b.z) { mutableListOf() }
+                                .add(b)
+
+                            BlockFace.EAST, BlockFace.WEST
+                                -> blocksByHeight.getOrPut(b.x) { mutableListOf() }
+                                .add(b)
+
+                            BlockFace.UP, BlockFace.DOWN
+                                -> blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+
+                            else -> return false
+                        }
                     }
 
                     blocks.clear()
 
-                    val sortedHeights = blocksByHeight.keys.sorted()
+                    val sortedHeights = blocksByHeight.keys.toList()
+                        .applyIf(
+                            direction == BlockFace.SOUTH ||
+                                    direction == BlockFace.EAST ||
+                                    direction == BlockFace.UP
+                        ) { sortedDescending() }
+                        .applyIf(
+                            direction == BlockFace.NORTH ||
+                                    direction == BlockFace.WEST ||
+                                    direction == BlockFace.DOWN
+                        ) { sorted() }
+
                     var currentHeightIndex = 0
                     var currentBlockInHeight = 0
 
@@ -523,9 +695,9 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 }
             } else if (type.equals("decay", ignoreCase = true)) {
-                if (from.equals("center", ignoreCase = true)) {
-                    val shuffledBlocks = blocks.shuffled()
+                val shuffledBlocks = blocks.shuffled()
 
+                if (from.equals("center", ignoreCase = true)) {
                     val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
 
                     for (b in shuffledBlocks) {
@@ -574,8 +746,6 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 } else if (from.equals("outside", ignoreCase = true)) {
-                    val shuffledBlocks = blocks.shuffled()
-
                     val blocksByDistance = mutableMapOf<Int, MutableList<Block>>()
 
                     for (b in shuffledBlocks) {
@@ -623,18 +793,48 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             currentBlockInDistance = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
-                } else if (from.equals("above", ignoreCase = true)) {
-                    val shuffledBlocks = blocks.shuffled()
-
+                } else if (
+                    from.equals("south", ignoreCase = true) ||
+                    from.equals("north", ignoreCase = true) ||
+                    from.equals("east", ignoreCase = true) ||
+                    from.equals("west", ignoreCase = true) ||
+                    from.equals("above", ignoreCase = true) ||
+                    from.equals("below", ignoreCase = true)
+                ) {
                     val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
 
                     for (b in shuffledBlocks) {
-                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                        if (
+                            from.equals("south", ignoreCase = true) ||
+                            from.equals("north", ignoreCase = true)
+                        )
+                            blocksByHeight.getOrPut(b.z) { mutableListOf() }.add(b)
+                        else if (
+                            from.equals("east", ignoreCase = true) ||
+                            from.equals("west", ignoreCase = true)
+                        )
+                            blocksByHeight.getOrPut(b.x) { mutableListOf() }.add(b)
+                        else if (
+                            from.equals("above", ignoreCase = true) ||
+                            from.equals("below", ignoreCase = true)
+                        )
+                            blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
                     }
 
                     blocks.clear()
 
-                    val sortedHeights = blocksByHeight.keys.sortedDescending()
+                    val sortedHeights = blocksByHeight.keys.toList()
+                        .applyIf(
+                            from.equals("south", ignoreCase = true) ||
+                                    from.equals("east", ignoreCase = true) ||
+                                    from.equals("above", ignoreCase = true)
+                        ) { sortedDescending() }
+                        .applyIf(
+                            from.equals("north", ignoreCase = true) ||
+                                    from.equals("west", ignoreCase = true) ||
+                                    from.equals("below", ignoreCase = true)
+                        ) { sorted() }
+
                     var currentHeightIndex = 0
                     var currentBlockInHeight = 0
 
@@ -668,18 +868,42 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                             currentBlockInHeight = 0
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
-                } else if (from.equals("below", ignoreCase = true)) {
-                    val shuffledBlocks = blocks.shuffled()
+                } else if (from.equals("direction", ignoreCase = true)) {
+                    val direction = player.direction.oppositeFace
 
                     val blocksByHeight = mutableMapOf<Int, MutableList<Block>>()
 
                     for (b in shuffledBlocks) {
-                        blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+                        when (direction) {
+                            BlockFace.SOUTH, BlockFace.NORTH
+                                -> blocksByHeight.getOrPut(b.z) { mutableListOf() }
+                                .add(b)
+
+                            BlockFace.EAST, BlockFace.WEST
+                                -> blocksByHeight.getOrPut(b.x) { mutableListOf() }
+                                .add(b)
+
+                            BlockFace.UP, BlockFace.DOWN
+                                -> blocksByHeight.getOrPut(b.y) { mutableListOf() }.add(b)
+
+                            else -> return false
+                        }
                     }
 
                     blocks.clear()
 
-                    val sortedHeights = blocksByHeight.keys.sorted()
+                    val sortedHeights = blocksByHeight.keys.toList()
+                        .applyIf(
+                            direction == BlockFace.SOUTH ||
+                                    direction == BlockFace.EAST ||
+                                    direction == BlockFace.UP
+                        ) { sortedDescending() }
+                        .applyIf(
+                            direction == BlockFace.NORTH ||
+                                    direction == BlockFace.WEST ||
+                                    direction == BlockFace.DOWN
+                        ) { sorted() }
+
                     var currentHeightIndex = 0
                     var currentBlockInHeight = 0
 
@@ -714,8 +938,6 @@ object EffectMineRadius : MineBlockEffect<NoCompileData>("mine_radius") {
                         }
                     }.runTaskTimer(block.location, 1, delay.toLong())
                 } else if (from.equals("all", ignoreCase = true)) {
-                    val shuffledBlocks = blocks.shuffled()
-
                     var currentIndex = 0
 
                     plugin.runnableFactory.create { task ->
