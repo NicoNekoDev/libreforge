@@ -4,6 +4,7 @@ import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.eco.core.events.MultiBlockBreakEvent
 import com.willfp.eco.core.events.MultiBlockItemDropEvent
 import com.willfp.eco.util.runExempted
+import com.willfp.libreforge.applyDamage
 import com.willfp.libreforge.effects.Effect
 import com.willfp.libreforge.plugin
 import com.willfp.libreforge.triggers.TriggerData
@@ -87,6 +88,8 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
                         return@runExempted
                 }
 
+                val damageToApply = blockList.size
+
                 val iter = blockList.iterator()
                 while (iter.hasNext()) {
                     val (block, entry) = iter.next()
@@ -97,6 +100,8 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
                     block.removeMetadata(ignoreKey, plugin)
                     iter.remove()
                 }
+
+                item.applyDamage(damageToApply, player)
             }
         }
     }
