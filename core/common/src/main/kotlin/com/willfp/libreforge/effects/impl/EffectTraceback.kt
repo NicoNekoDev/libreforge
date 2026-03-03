@@ -44,10 +44,12 @@ object EffectTraceback : Effect<NoCompileData>("traceback") {
         return true
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun postRegister() {
-        plugin.scheduler.runTaskTimer(20, 20) {
-            for (player in Bukkit.getOnlinePlayers()) {
-                @Suppress("UNCHECKED_CAST")
+        Bukkit.getOnlinePlayers().forEach { player ->
+            // one timer for each player in folia
+            // sadly the same for spigot, and it's annoying :(
+            plugin.scheduler.runTaskTimer(player, 20, 20) {
                 val times = player.getMetadata(key).getOrNull(0)?.value() as? List<Location> ?: emptyList()
                 val newTimes = (if (times.size < 29) times else times.drop(1)) + player.location
 

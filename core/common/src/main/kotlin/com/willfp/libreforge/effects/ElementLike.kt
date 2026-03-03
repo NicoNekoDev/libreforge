@@ -164,14 +164,22 @@ abstract class ElementLike : ConfigurableElement {
         } else {
             // Delay between each repeat.
             var repeats = 0
-            plugin.runnableFactory.create { task ->
+            val task = plugin.runnableFactory.create { task ->
                 repeats++
                 trigger()
 
                 if (repeats >= repeatTimes) {
                     task.cancelTask()
                 }
-            }.runTaskTimer(delay, delay)
+            }
+            // folia issue, run the task based on whom the trigger is for
+            if (data.player != null) {
+                task.runTaskTimer(data.player, delay, delay)
+            } else if (data.victim != null) {
+                task.runTaskTimer(data.victim, delay, delay)
+            } else {
+                task.runTaskTimer(delay, delay)
+            }
         }
 
         // Code here is fucking disgusting duplicating the delay check.
