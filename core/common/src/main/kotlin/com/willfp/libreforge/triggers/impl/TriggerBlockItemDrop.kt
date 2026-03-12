@@ -1,7 +1,7 @@
 package com.willfp.libreforge.triggers.impl
 
 import com.willfp.eco.core.drops.DropQueue
-import com.willfp.eco.core.events.MultiBlockItemDropEvent
+import com.willfp.eco.core.events.MultiBlockDropItemEvent
 import com.willfp.eco.core.integrations.antigrief.AntigriefManager
 import com.willfp.libreforge.filterNotEmpty
 import com.willfp.libreforge.toDispatcher
@@ -55,7 +55,11 @@ object TriggerBlockItemDrop : Trigger("block_item_drop") {
             player.toDispatcher(),
             TriggerData(
                 player = player,
-                block = BrokenBlock(block, event.blockState.type, event.blockState.blockData), // Fixes the type always being AIR
+                block = BrokenBlock(
+                    block,
+                    event.blockState.type,
+                    event.blockState.blockData
+                ), // Fixes the type always being AIR
                 location = block.location,
                 event = editableEvent,
                 item = null,
@@ -81,7 +85,7 @@ object TriggerBlockItemDrop : Trigger("block_item_drop") {
         ignoreCancelled = true,
         priority = EventPriority.LOW
     )
-    fun handle(event: MultiBlockItemDropEvent) {
+    fun handle(event: MultiBlockDropItemEvent) {
         val player = event.player
 
         if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
@@ -130,7 +134,7 @@ object TriggerBlockItemDrop : Trigger("block_item_drop") {
         private val block: Block,
         private val type: Material,
         private val data: BlockData
-    ): Block by block {
+    ) : Block by block {
         override fun getType() = type
         override fun getBlockData(): BlockData = data
     }

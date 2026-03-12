@@ -25,61 +25,52 @@ object EffectDrill : MineBlockEffect<NoCompileData>("drill") {
 
     override fun onTrigger(config: Config, data: TriggerData, compileData: NoCompileData): Boolean {
         val block = data.block ?: data.location?.block ?: return false
-
         val player = data.player ?: return false
+        val world = block.world
 
         val amount = config.getIntFromExpression("amount", data)
 
-        if (player.isSneaking && config.getBool("disable_on_sneak")) {
+        if (player.isSneaking && config.getBool("disable_on_sneak"))
             return false
-        }
 
         val whitelist = config.getStringsOrNull("whitelist")
-            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }
+            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }?.toSet()
 
         val blacklist = config.getStringsOrNull("blacklisted_blocks")
-            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }
+            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }?.toSet()
 
-        val blocks = mutableListOf<Block>()
+        val blocks = mutableSetOf<Block>()
 
         val checkHardness = config.getBool("check_hardness")
 
         for (i in 1..amount) {
             val simplified = VectorUtils.simplifyVector(player.location.direction.normalize()).multiply(i)
-            val toBreak = block.world.getBlockAt(block.location.clone().add(simplified))
+            val toBreak = world.getBlockAt(block.location.clone().add(simplified))
 
-            if (toBreak.type == Material.AIR) {
+            if (toBreak.type == Material.AIR)
                 continue
-            }
 
-            if (toBreak.type.hardness < 0) {
+            if (toBreak.type.hardness < 0)
                 continue
-            }
 
-            if (!AntigriefManager.canBreakBlock(player, toBreak)) {
+            if (!AntigriefManager.canBreakBlock(player, toBreak))
                 continue
-            }
 
-            if (blacklist != null) {
-                if (toBreak.type in blacklist) {
+            if (blacklist != null)
+                if (toBreak.type in blacklist)
                     continue
-                }
-            }
 
-            if (whitelist != null) {
-                if (toBreak.type !in whitelist) {
+            if (whitelist != null)
+                if (toBreak.type !in whitelist)
                     continue
-                }
-            }
 
-            if (checkHardness && toBreak.type.hardness > block.type.hardness) {
+            if (checkHardness && toBreak.type.hardness > block.type.hardness)
                 continue
-            }
 
             blocks.add(toBreak)
         }
 
-        player.breakBlocksSafely(player.inventory.itemInMainHand, blocks)
+        player.breakBlocksSafely(blocks)
 
         return true
     }

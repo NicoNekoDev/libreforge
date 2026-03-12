@@ -29,25 +29,24 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
 
         val radius = config.getIntFromExpression("radius", data)
 
-        if (player.isSneaking && config.getBool("disable_on_sneak")) {
+        if (player.isSneaking && config.getBool("disable_on_sneak"))
             return false
-        }
 
         val whitelist = config.getStringsOrNull("whitelist")
-            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }
+            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }?.toSet()
 
         val blacklist = config.getStringsOrNull("blacklisted_blocks")
-            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }
+            ?.mapNotNull { Material.matchMaterial(it.uppercase()) }?.toSet()
 
         val blocks = mutableListOf<Block>()
 
-        val ignoreVector = player.location.direction.simplify()
-
         val checkHardness = config.getBool("check_hardness")
+        val noCorners = config.getBool("no_corners")
+
+        val ignoreVector = player.location.direction.simplify()
 
         for (y in (-radius..radius)) {
             val endY = block.y + y
-
             if (endY !in world.minHeight..world.maxHeight) {
                 continue
             }
@@ -72,7 +71,7 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
                         continue
                     }
 
-                    if (config.getBool("no_corners")) {
+                    if (noCorners) {
                         val atXCorner = abs(x) == radius
                         val atYCorner = abs(y) == radius
                         val atZCorner = abs(z) == radius
@@ -87,40 +86,32 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
 
                     val toBreak = world.getBlockAt(block.x + x, block.y + y, block.z + z)
 
-                    if (toBreak.type == Material.AIR) {
+                    if (toBreak.type == Material.AIR)
                         continue
-                    }
 
-                    if (toBreak.type.hardness < 0) {
+                    if (toBreak.type.hardness < 0)
                         continue
-                    }
 
-                    if (!AntigriefManager.canBreakBlock(player, toBreak)) {
+                    if (!AntigriefManager.canBreakBlock(player, toBreak))
                         continue
-                    }
 
-                    if (blacklist != null) {
-                        if (toBreak.type in blacklist) {
+                    if (blacklist != null)
+                        if (toBreak.type in blacklist)
                             continue
-                        }
-                    }
 
-                    if (whitelist != null) {
-                        if (toBreak.type !in whitelist) {
+                    if (whitelist != null)
+                        if (toBreak.type !in whitelist)
                             continue
-                        }
-                    }
 
-                    if (checkHardness && toBreak.type.hardness > block.type.hardness) {
+                    if (checkHardness && toBreak.type.hardness > block.type.hardness)
                         continue
-                    }
 
                     blocks.add(toBreak)
                 }
             }
         }
 
-        player.breakBlocksSafely(player.inventory.itemInMainHand, blocks)
+        player.breakBlocksSafely(blocks)
 
         return true
     }

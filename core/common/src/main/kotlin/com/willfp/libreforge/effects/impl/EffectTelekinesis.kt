@@ -3,7 +3,7 @@ package com.willfp.libreforge.effects.impl
 import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.eco.core.drops.DropQueue
 import com.willfp.eco.core.events.EntityDeathByEntityEvent
-import com.willfp.eco.core.events.MultiBlockItemDropEvent
+import com.willfp.eco.core.events.MultiBlockDropItemEvent
 import com.willfp.eco.core.integrations.antigrief.AntigriefManager
 import com.willfp.eco.core.map.listMap
 import com.willfp.eco.util.TelekinesisUtils
@@ -73,31 +73,6 @@ object EffectTelekinesis : Effect<NoCompileData>("telekinesis") {
             .push()
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    fun handle(event: MultiBlockItemDropEvent) {
-        val player = event.player
-
-        for (block in event.blocks) {
-            if (!plugin.configYml.getBool("effects.telekinesis.always-process-blocks")
-                && !TelekinesisUtils.testPlayer(player)
-            ) {
-                return
-            }
-
-            if (!AntigriefManager.canBreakBlock(player, block)) {
-                return
-            }
-
-            val drops = event.getItems(block).map { it.itemStack }
-            event.getItems(block).clear()
-
-            DropQueue(player)
-                .setLocation(block.location)
-                .addItems(drops)
-                .push()
-        }
-    }
-
     @EventHandler(
         priority = EventPriority.HIGH,
         ignoreCancelled = true
@@ -129,6 +104,31 @@ object EffectTelekinesis : Effect<NoCompileData>("telekinesis") {
             .push()
 
         event.expToDrop = 0
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    fun handle(event: MultiBlockDropItemEvent) {
+        val player = event.player
+
+        for (block in event.blocks) {
+            if (!plugin.configYml.getBool("effects.telekinesis.always-process-blocks")
+                && !TelekinesisUtils.testPlayer(player)
+            ) {
+                return
+            }
+
+            if (!AntigriefManager.canBreakBlock(player, block)) {
+                return
+            }
+
+            val drops = event.getItems(block).map { it.itemStack }
+            event.getItems(block).clear()
+
+            DropQueue(player)
+                .setLocation(block.location)
+                .addItems(drops)
+                .push()
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

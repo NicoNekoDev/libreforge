@@ -1,6 +1,6 @@
 package com.willfp.libreforge.triggers.event
 
-import com.willfp.eco.core.events.MultiBlockItemDropEvent
+import com.willfp.eco.core.events.MultiBlockDropItemEvent
 import com.willfp.eco.util.toSingletonList
 import com.willfp.libreforge.plugin
 import org.bukkit.Location
@@ -144,7 +144,7 @@ class EditableBlockDropEvent(
 }
 
 class EditableMultiBlockDropEvent(
-    private val event: MultiBlockItemDropEvent
+    private val event: MultiBlockDropItemEvent
 ) : EditableDropEvent() {
     private val modifiers = mutableListOf<DropModifier>()
 

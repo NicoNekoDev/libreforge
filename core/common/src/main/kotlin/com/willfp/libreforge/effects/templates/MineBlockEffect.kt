@@ -2,7 +2,7 @@ package com.willfp.libreforge.effects.templates
 
 import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.eco.core.events.MultiBlockBreakEvent
-import com.willfp.eco.core.events.MultiBlockItemDropEvent
+import com.willfp.eco.core.events.MultiBlockDropItemEvent
 import com.willfp.eco.util.runExempted
 import com.willfp.libreforge.applyDamage
 import com.willfp.libreforge.effects.Effect
@@ -16,7 +16,6 @@ import org.bukkit.entity.Item
 import org.bukkit.entity.Player
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockDropItemEvent
-import org.bukkit.inventory.ItemStack
 
 abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
     private val ignoreKey = "blockbreakevent-ignore"
@@ -30,14 +29,15 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
         return !block.hasMetadata(ignoreKey)
     }
 
-    protected fun Player.breakBlocksSafely(item: ItemStack, blocks: Collection<Block>) {
+    protected fun Player.breakBlocksSafely(blocks: Collection<Block>) {
+        val item = this.inventory.itemInMainHand
         val useMultiBlocksEvents = plugin.configYml.getBool("effects.use-multiblock-events")
 
         if (plugin.configYml.getBool("effects.use-setblock-break")) {
             blocks.forEach { it.type = Material.AIR }
         } else {
             this.runExempted {
-                val blockList = mutableMapOf<Block, MultiBlockItemDropEvent.BlockStateAndItems>()
+                val blockList = mutableMapOf<Block, MultiBlockDropItemEvent.BlockStateAndItems>()
 
                 for (block in blocks) {
                     if (block.world != this.world) {
@@ -68,7 +68,7 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
                         }
                     }
 
-                    blockList[block] = MultiBlockItemDropEvent.BlockStateAndItems(block.state, items)
+                    blockList[block] = MultiBlockDropItemEvent.BlockStateAndItems(block.state, items)
                 }
 
                 val multiBlockBreak = MultiBlockBreakEvent(this, blockList.keys)
@@ -80,7 +80,7 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
                 }
 
                 // blockList is probably mutated by the event above, so we put it after
-                val multiBlockDrop = MultiBlockItemDropEvent(this, blockList)
+                val multiBlockDrop = MultiBlockDropItemEvent(this, blockList)
 
                 if (useMultiBlocksEvents) {
                     Bukkit.getPluginManager().callEvent(multiBlockDrop)
@@ -101,7 +101,9 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
                     iter.remove()
                 }
 
-                item.applyDamage(damageToApply, player)
+                item.applyDamage(damageToApply, this) {
+                    this.inventory.setItemInMainHand(item.withType(Material.AIR))
+                }
             }
         }
     }
