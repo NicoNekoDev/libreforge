@@ -111,7 +111,12 @@ object EffectMineRadiusOneDeep : MineBlockEffect<NoCompileData>("mine_radius_one
             }
         }
 
-        player.breakBlocksSafely(blocks)
+        val animation = config.getSubsectionOrNull("animation")
+
+        if (animation == null)
+            player.breakBlocksSafely(blocks)
+        else
+            player.breakBlocksSafelyWithAnimation(radius, block, blocks, animation)
 
         return true
     }
