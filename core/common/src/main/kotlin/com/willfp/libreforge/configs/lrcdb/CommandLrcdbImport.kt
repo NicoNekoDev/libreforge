@@ -13,7 +13,7 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URI
 
-object CommandLrcdbImport : Subcommand(
+internal object CommandLrcdbImport : Subcommand(
     plugin,
     "import",
     "libreforge.command.lrcdb",

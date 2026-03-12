@@ -10,7 +10,6 @@ import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.util.StringUtil
 
-@Suppress("UsagesOfObsoleteApi")
 internal object CommandPointsSet : Subcommand(
     plugin,
     "set",

@@ -10,8 +10,7 @@ import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.util.StringUtil
 
-@Suppress("UsagesOfObsoleteApi")
-internal object CommandPointsTake : Subcommand(
+internal object CommandPointsTake: Subcommand(
     plugin,
     "take",
     "libreforge.command.points.take",
@@ -49,11 +48,10 @@ internal object CommandPointsTake : Subcommand(
         // Global points
         if (playerString.equals("global", ignoreCase = true)) {
             globalPoints[pointString] = globalPoints[pointString] - amountNum
-            sender.sendMessage(
-                plugin.langYml.getMessage("points-taken")
-                    .replace("%playername%", "server")
-                    .replace("%point%", pointString.toFriendlyPointName())
-                    .replace("%amount%", amountNum.toNiceString())
+            sender.sendMessage(plugin.langYml.getMessage("points-taken")
+                .replace("%playername%", "server")
+                .replace("%point%", pointString.toFriendlyPointName())
+                .replace("%amount%", amountNum.toNiceString())
             )
             return
         }

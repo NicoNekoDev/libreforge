@@ -9,6 +9,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.world.ChunkLoadEvent
 
 object EntityRefreshListener : Listener {
+
     @EventHandler
     fun onChunkLoad(event: ChunkLoadEvent) {
         event.chunk.entities.filterIsInstance<LivingEntity>()

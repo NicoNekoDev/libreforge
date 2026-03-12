@@ -50,7 +50,7 @@ internal object CommandDebug : Subcommand(
         for (loadedPlugin in Plugins.values()) {
             plugin.logger.info(
                 "- ${loadedPlugin.plugin.name} v${loadedPlugin.plugin.description.version} " +
-                    "[${loadedPlugin.id}] (${loadedPlugin.categories.values().joinToString(", ") { it.id }})"
+                        "[${loadedPlugin.id}] (${loadedPlugin.categories.values().joinToString(", ") { it.id }})"
             )
         }
 

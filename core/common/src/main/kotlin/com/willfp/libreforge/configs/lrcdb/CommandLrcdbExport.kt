@@ -8,7 +8,7 @@ import com.willfp.libreforge.plugin
 import org.bukkit.command.CommandSender
 import org.bukkit.util.StringUtil
 
-object CommandLrcdbExport : Subcommand(
+internal object CommandLrcdbExport : Subcommand(
     plugin,
     "export",
     "libreforge.command.lrcdb",

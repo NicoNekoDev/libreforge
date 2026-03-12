@@ -14,7 +14,6 @@ folia-supported: true
 
 softdepend:
   - eco
-  - AureliumSkills
   - Jobs
   - LevelledMobs
   - mcMMO
