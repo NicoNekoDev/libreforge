@@ -172,28 +172,4 @@ object EffectGlowNearbyBlocks : Effect<NoCompileData>("glow_nearby_blocks") {
             }
         }
     }
-
-    @EventHandler
-    fun onBreak(event: MultiBlockBreakEvent) {
-        for (block in event.blocks) {
-            if (!block.hasMetadata("gnb-uuid")) {
-                return
-            }
-
-            val uuid = block.getMetadata("gnb-uuid").firstOrNull {
-                it.value() is UUID
-            }?.value() as? UUID ?: return
-
-            Bukkit.getServer().getEntity(uuid)?.remove()
-
-            for (shulker in block.location.world.getNearbyEntities(
-                block.location,
-                2.0,
-                2.0,
-                2.0
-            ) { it.hasMetadata("gnb-shulker") }) {
-                shulker.remove()
-            }
-        }
-    }
 }

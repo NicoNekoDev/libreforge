@@ -22,6 +22,7 @@ abstract class DamageItemEffect(id: String) : Effect<NoCompileData>(id) {
 
     abstract fun getItems(data: TriggerData): List<ItemStack>
 
+    @Suppress("DEPRECATION")
     final override fun onTrigger(config: Config, data: TriggerData, compileData: NoCompileData): Boolean {
         val victim = data.victim ?: return false
 
