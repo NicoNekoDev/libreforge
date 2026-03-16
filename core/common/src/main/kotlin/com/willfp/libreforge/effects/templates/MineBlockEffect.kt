@@ -37,13 +37,15 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
 
     protected fun Player.breakBlocksSafely(blocks: Collection<Block>) {
         val item = this.inventory.itemInMainHand
-        val useMultiBlocksEvents = plugin.configYml.getBool("effects.use-multiblock-events")
 
         if (plugin.configYml.getBool("effects.use-setblock-break")) {
             blocks.forEach { it.type = Material.AIR }
         } else {
             this.runExempted {
+                val useMultiBlocksEvents = plugin.configYml.getBool("effects.use-multiblock-events")
+
                 val blockList = mutableMapOf<Block, MultiBlockDropItemEvent.BlockStateAndItems>()
+                val createdItems = mutableListOf<Item>()
 
                 for (block in blocks) {
                     if (block.world != this.world) {
@@ -55,6 +57,7 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
                             block.location.toCenterLocation(),
                             Item::class.java
                         ).apply { itemStack = it }
+                            .apply { createdItems.add(this) }
                     }
 
                     if (!useMultiBlocksEvents) {
@@ -106,6 +109,9 @@ abstract class MineBlockEffect<T : Any>(id: String) : Effect<T>(id) {
                     block.removeMetadata(ignoreKey, plugin)
                     iter.remove()
                 }
+
+                // created entities that didn't spawn may lead to memory leaks
+                createdItems.filter { it.isInWorld }.forEach { it.remove() }
 
                 item.applyDamage(damageToApply, this) {
                     this.inventory.setItemInMainHand(item.withType(Material.AIR))

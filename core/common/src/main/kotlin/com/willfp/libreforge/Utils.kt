@@ -72,6 +72,9 @@ fun ItemStack.applyDamage(damage: Int, player: Player?): Boolean {
 
 fun ItemStack.applyDamage(damage: Int, player: Player?, removeItem: Runnable): Boolean {
     val meta = this.itemMeta as? Damageable ?: return false
+    // don't apply damage to unbreakable
+    if (meta.isUnbreakable) return false
+
     val unbreaking = meta.getEnchantLevel(Enchantment.UNBREAKING)
 
     // Calculate actual damage considering unbreaking
