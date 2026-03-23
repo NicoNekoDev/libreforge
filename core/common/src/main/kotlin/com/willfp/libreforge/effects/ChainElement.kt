@@ -12,10 +12,8 @@ import com.willfp.libreforge.effects.events.EffectDisableEvent
 import com.willfp.libreforge.effects.events.EffectEnableEvent
 import com.willfp.libreforge.filters.FilterList
 import com.willfp.libreforge.mutators.MutatorList
-import com.willfp.libreforge.toDispatcher
 import com.willfp.libreforge.triggers.DispatchedTrigger
 import org.bukkit.Bukkit
-import org.bukkit.entity.Player
 import java.util.UUID
 
 /**
@@ -79,27 +77,4 @@ class ChainElement<T> internal constructor(
 
     override fun shouldTrigger(trigger: DispatchedTrigger): Boolean =
         effect.shouldTrigger(trigger, this)
-
-
-    @Deprecated(
-        "Use enable(Dispatcher<*>, ProvidedHolder, Boolean)",
-        ReplaceWith("enable(player.toDispatcher(), holder, isReload)"),
-        DeprecationLevel.ERROR
-    )
-    fun enable(
-        player: Player,
-        holder: ProvidedHolder,
-        isReload: Boolean = false
-    ): Unit = enable(player.toDispatcher(), holder, isReload)
-
-    @Deprecated(
-        "Use disable(Dispatcher<*>, ProvidedHolder, Boolean)",
-        ReplaceWith("disable(player.toDispatcher(), holder, isReload)"),
-        DeprecationLevel.ERROR
-    )
-    fun disable(
-        player: Player,
-        holder: ProvidedHolder,
-        isReload: Boolean = false
-    ): Unit = disable(player.toDispatcher(), holder, isReload)
 }
